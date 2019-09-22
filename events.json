@@ -1,0 +1,172 @@
+{
+  "events": {
+    "ipv4": [
+      {
+          "name": "ip_local_deliver",
+          "args": [
+              "struct sk_buff *skb"
+          ]
+      },
+      {
+          "name": "ip_rcv",
+          "args": [
+              "struct sk_buff *skb"
+          ]
+      },
+      {
+          "name": "ip_local_out",
+          "args": [
+              "struct net *net",
+              "struct sock *sk",
+              "struct sk_buff *skb"
+          ]
+      },
+      {
+          "name": "ip_output",
+          "args": [
+              "struct net *net",
+              "struct sock *sk",
+              "struct sk_buff *skb"
+          ]
+      },
+      {
+          "name": "ip_forward",
+          "args": [
+              "struct sk_buff *skb"
+          ]
+      },
+      {
+          "name": "ip_route_input_noref",
+          "args": [
+              "struct sk_buff *skb",
+              "__be32 daddr",
+              "__be32 saddr",
+              "u8 tos",
+              "struct net_device *dev"
+          ]
+      }
+    ],
+    "vrf": [
+      {
+          "name": "vrf_l3_rcv",
+          "args": [
+              "struct net_device *vrf_dev",
+              "struct sk_buff *skb",
+              "u16 proto"
+          ]
+      },
+      {
+          "name": "vrf_l3_out",
+          "args": [
+              "struct net_device *vrf_dev",
+              "struct sock *sk",
+              "struct sk_buff *skb",
+              "u16 proto"
+          ]
+      },
+      {
+          "name": "vrf_output",
+          "args": [
+              "struct net *net",
+              "struct sock *sk",
+              "struct sk_buff *skb"
+          ]
+      },
+      {
+          "name": "vrf_xmit",
+          "args": [
+              "struct sk_buff *skb",
+              "struct net_device *dev"
+          ]
+      },
+      {
+          "name": "vrf_local_xmit",
+          "args": [
+              "struct sk_buff *skb",
+              "struct net_device *dev",
+              "struct dst_entry *dst"
+          ]
+      }
+    ],
+    "ipv6": [
+      {
+          "name": "ipv6_rcv",
+          "args": [
+              "struct sk_buff *skb"
+          ]
+      },
+      {
+          "name": "ip6_input",
+          "args": [
+              "struct sk_buff *skb"
+          ]
+      },
+      {
+          "name": "ip6_output",
+          "args": [
+              "struct net *net",
+              "struct sock *sk",
+              "struct sk_buff *skb"
+          ]
+      },
+      {
+          "name": "ip6_local_out",
+          "args": [
+              "struct net *net",
+              "struct sock *sk",
+              "struct sk_buff *skb"
+          ]
+      },
+      {
+          "name": "ip6_forward",
+          "args": [
+              "struct sk_buff *skb"
+          ]
+      },
+      {
+          "name": "ipv6_rthdr_rcv",
+          "args": [
+              "struct sk_buff *skb"
+          ]
+      }
+    ],
+    "lwt": [
+      {
+          "name": "lwtunnel_input",
+          "args": [
+              "struct sk_buff *skb"
+          ]
+      },
+      {
+          "name": "lwtunnel_output",
+          "args": [
+              "struct net *net",
+              "struct sock *sk",
+              "struct sk_buff *skb"
+          ]
+      },
+      {
+          "name": "lwtunnel_xmit",
+          "args": [
+              "struct sk_buff *skb"
+          ]
+      }
+    ],
+    "seg6": [
+      {
+          "name": "seg6_input",
+          "args": [
+              "struct sk_buff *skb"
+          ]
+      },
+      {
+          "name": "seg6_output",
+          "args": [
+              "struct net *net",
+              "struct sock *sk",
+              "struct sk_buff *skb"
+          ]
+      }
+    ]
+  }
+}
