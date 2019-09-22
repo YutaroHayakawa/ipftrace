@@ -44,7 +44,7 @@ ICMP		8.8.8.8	->	10.0.2.15	['ip_rcv', 'ip_route_input_noref', 'ip_local_deliver'
 ...
 ```
 
-It can trace the packets with lwtunnel excapsulation
+We can trace the packets with lwtunnel excapsulation
 ```
 $ ping 10.0.1.10
 
@@ -53,6 +53,16 @@ Trace ready!
 ICMP		10.0.0.10	->	10.0.1.10	['lwtunnel_output', 'seg6_output']
 IPv4		fc00::10	->	fc00::11	['ip6_output']
 ...
+```
+
+We can exclude the groups of tracing functions
+```
+$ ping 10.0.1.10
+
+$ sudo python3.7 iptrace.py -s4 10.0.0.10 -s6 fc00::10 -e lwt
+Trace ready!
+ICMP		10.0.0.10	->	10.0.1.10	['seg6_output']
+IPv4		fc00::10	->	fc00::11	['ip6_output', 'ipv6_rcv', 'ip6_input', 'ipv6_rthdr_rcv']
 ```
 
 ## How it works
