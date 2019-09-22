@@ -127,6 +127,3 @@ Here we have some contents in the events.json
 As you can see, it just enumerate the name of the functions and their argument types.
 Adding new functions is very straight forward. The only requirement is that the function
 takes `struct sk_buff` as argument.
-
-That means, if the functions inside the kernel changes, we need to change the `events.json` too.
-I chose the functions supporsed to be rarely changed for the default sets. Please feel free to add new functions.
