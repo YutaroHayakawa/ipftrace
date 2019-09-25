@@ -62,7 +62,7 @@ $ ping 10.0.1.10
 $ sudo python3.7 iptrace.py -s4 10.0.0.10 -s6 fc00::10 -e lwt
 Trace ready!
 ICMP		10.0.0.10	->	10.0.1.10	['seg6_output']
-IPv4		fc00::10	->	fc00::11	['ip6_output', 'ipv6_rcv', 'ip6_input', 'ipv6_rthdr_rcv']
+IPv4		fc00::10	->	fc00::11	['ip6_output']
 ```
 
 ## How it works
