@@ -6,6 +6,28 @@ It helps you with understanding how packets are routed inside the kernel.
 - Python3.6 or above
 - [BCC](https://github.com/iovisor/bcc)
 
+## Usage
+
+```
+python ipftrace.py --help
+Usage: ipftrace.py [OPTIONS]
+
+  Track the journey of the packets in Linux L3 layer
+
+Options:
+  -k, --kernel-version TEXT  Specify Linux kernel version
+  -l3, --l3proto [any|4|6]   Specify IP version
+  -l4, --l4proto TEXT        Specify L4 protocol
+  -s4, --saddr4 TEXT         Specify IPv4 source address
+  -d4, --daddr4 TEXT         Specify IPv4 destination address
+  -s6, --saddr6 TEXT         Specify IPv6 source address
+  -d6, --daddr6 TEXT         Specify IPv6 destination address
+  -sp, --sport TEXT          Specify source port number
+  -dp, --dport TEXT          Specify destination port number
+  -l, --list                 List available groups and functions
+  --help                     Show this message and exit.
+```
+
 ## Examples
 
 List functions can be tracked
