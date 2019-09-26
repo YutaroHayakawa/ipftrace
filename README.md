@@ -1,5 +1,5 @@
-# ipfntrace
-ipfntrace is a tool which tracks the functions that the packets have gone through inside the Linux kernel's L3 layer.
+# ipftrace
+ipftrace is a tool which tracks the functions that the packets have gone through inside the Linux kernel's L3 layer.
 It helps you with understanding how packets are routed inside the kernel.
 
 ## Dependencies
@@ -10,7 +10,7 @@ It helps you with understanding how packets are routed inside the kernel.
 
 List functions can be tracked
 ```
-$ sudo python3.7 ipfntrace.py -l
+$ sudo python3.7 ipftrace.py -l
 
 Available events
 ipv4
@@ -37,7 +37,7 @@ We can filter the packets by IP address, port number, protocol number and so on.
 ```
 $ ping 8.8.8.8
 
-$ sudo python3.7 ipfntrace.py -l3 IPv4 -l4 ICMP
+$ sudo python3.7 ipftrace.py -l3 IPv4 -l4 ICMP
 Trace ready!
 ICMP		10.0.2.15	->	8.8.8.8	['ip_output']
 ICMP		8.8.8.8	->	10.0.2.15	['ip_rcv', 'ip_route_input_noref', 'ip_local_deliver']
@@ -48,7 +48,7 @@ We can trace the packets with lwtunnel excapsulation
 ```
 $ ping 10.0.1.10
 
-$ sudo python3.7 ipfntrace.py -s4 10.0.0.10 -s6 fc00::10
+$ sudo python3.7 ipftrace.py -s4 10.0.0.10 -s6 fc00::10
 Trace ready!
 ICMP		10.0.0.10	->	10.0.1.10	['lwtunnel_output', 'seg6_output']
 IPv4		fc00::10	->	fc00::11	['ip6_output']
@@ -59,7 +59,7 @@ We can exclude the groups of tracing functions
 ```
 $ ping 10.0.1.10
 
-$ sudo python3.7 ipfntrace.py -s4 10.0.0.10 -s6 fc00::10 -e lwt
+$ sudo python3.7 ipftrace.py -s4 10.0.0.10 -s6 fc00::10 -e lwt
 Trace ready!
 ICMP		10.0.0.10	->	10.0.1.10	['seg6_output']
 IPv4		fc00::10	->	fc00::11	['ip6_output']
