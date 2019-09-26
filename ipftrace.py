@@ -253,16 +253,16 @@ def run_tracing(ift):
 
 
 @click.command()
-@click.option("--kernel-version", default=guess_kernel_version, type=str, help="Specify Linux kernel version")
-@click.option("--l3proto", default="any", type=click.Choice(["any", "4", "6"]), help="Specify IP version")
-@click.option("--l4proto", default="any", help="Specify L4 protocol")
-@click.option("--saddr4", default="any", help="Specify IPv4 source address")
-@click.option("--daddr4", default="any", help="Specify IPv4 destination address")
-@click.option("--saddr6", default="any", help="Specify IPv6 source address")
-@click.option("--daddr6", default="any", help="Specify IPv6 destination address")
-@click.option("--sport", default="any", help="Specify source port number")
-@click.option("--dport", default="any", help="Specify destination port number")
-@click.option("--list", is_flag=True, help="List available groups and functions")
+@click.option("-k", "--kernel-version", default=guess_kernel_version, type=str, help="Specify Linux kernel version")
+@click.option("-l3", "--l3proto", default="any", type=click.Choice(["any", "4", "6"]), help="Specify IP version")
+@click.option("-l4", "--l4proto", default="any", help="Specify L4 protocol")
+@click.option("-s4", "--saddr4", default="any", help="Specify IPv4 source address")
+@click.option("-d4", "--daddr4", default="any", help="Specify IPv4 destination address")
+@click.option("-s6", "--saddr6", default="any", help="Specify IPv6 source address")
+@click.option("-d6", "--daddr6", default="any", help="Specify IPv6 destination address")
+@click.option("-sp", "--sport", default="any", help="Specify source port number")
+@click.option("-dp", "--dport", default="any", help="Specify destination port number")
+@click.option("-l", "--list", is_flag=True, help="List available groups and functions")
 def main(kernel_version, l3proto, l4proto, saddr4, daddr4, saddr6, daddr6, sport, dport, list):
     """
     Track the journey of the packets in Linux L3 layer
