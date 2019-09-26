@@ -87,8 +87,17 @@ class IPFTracer:
 
     def read_functions(self):
         base_fname = f"conf/base/{self.args['kernel_version']}.yaml"
-        with open(base_fname) as bf:
-            self.functions = yaml.load(bf, Loader=yaml.FullLoader)["functions"]
+
+        try:
+            with open(base_fname) as f:
+                self.functions = yaml.load(f, Loader=yaml.FullLoader)["functions"]
+                return
+        except:
+            print(f"Failed to open {base_fname}. Falling back to default.")
+
+        with open("conf/base/default.yaml") as f:
+            self.functions = yaml.load(f, Loader=yaml.FullLoader)["functions"]
+
 
     def build_l3_protocol_opt(self, protocol):
         if protocol == "any":
@@ -150,6 +159,7 @@ class IPFTracer:
     def build_probes(self):
         eid = 0
         ret = open("ipftrace.bpf.c").read()
+
         for group, events in self.functions.items():
             for e in events:
                 self.id_to_ename.append(e["name"])
@@ -166,6 +176,7 @@ class IPFTracer:
                 )
                 ret += probe
                 eid += 1
+
         return ret
 
     def list_functions(self):
