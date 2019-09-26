@@ -3,13 +3,12 @@ ipftrace is a tool which tracks the functions that the packets have gone through
 It helps you with understanding how packets are routed inside the kernel.
 
 ## Dependencies
-- Python3.6 or above
+- Python3.7
 - [BCC](https://github.com/iovisor/bcc)
 
 ## Usage
 
 ```
-python ipftrace.py --help
 Usage: ipftrace.py [OPTIONS]
 
   Track the journey of the packets in Linux L3 layer
