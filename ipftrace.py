@@ -186,6 +186,58 @@ class IPFTracer:
             for e in l:
                 print(f"  {e['name']}")
 
+    def run_tracing(self):
+        probes = self.build_probes()
+        opts = self.build_opts()
+        b = BPF(text=probes, cflags=opts)
+        events = b["events"]
+
+        flows = {}
+
+        def handle_event(cpu, data, size):
+            event = cast(data, POINTER(EventData)).contents
+            event_name = self.resolve_event_name(event.event_id)
+
+            if str(event.l3_protocol) == L3_PROTO_TO_ID["IPv4"]:
+                saddr = ipaddress.IPv4Address(socket.ntohl(event.addrs.v4.saddr))
+                daddr = ipaddress.IPv4Address(socket.ntohl(event.addrs.v4.daddr))
+            elif str(event.l3_protocol) == L3_PROTO_TO_ID["IPv6"]:
+                saddr = ipaddress.IPv6Address(bytes(event.addrs.v6.saddr))
+                daddr = ipaddress.IPv6Address(bytes(event.addrs.v6.daddr))
+            else:
+                print(f"Unsupported l3 protocol {event.l3_protocol}")
+                return
+
+            flow = Flow(
+                l3_protocol=ID_TO_L3_PROTO[str(event.l3_protocol)],
+                l4_protocol=ID_TO_L4_PROTO[str(event.l4_protocol)],
+                saddr=str(saddr),
+                daddr=str(daddr),
+                sport=socket.ntohs(event.sport),
+                dport=socket.ntohs(event.dport),
+            )
+
+            event_list = flows.get(flow, [])
+            if event_name not in event_list:
+                event_list.append(event_name)
+
+            flows[flow] = event_list
+
+        events.open_perf_buffer(handle_event, page_cnt=64)
+
+        print("Trace ready!")
+        while 1:
+            try:
+                b.perf_buffer_poll()
+            except KeyboardInterrupt:
+                exit(0)
+
+            for f, e in flows.items():
+                proto = f.l4_protocol
+                src = f.saddr + ((":" + str(f.sport)) if f.sport != 0 else "")
+                dst = f.daddr + ((":" + str(f.dport)) if f.dport != 0 else "")
+                print(f"{proto}\t{src}\t->\t{dst}\t{e}")
+
 
 def guess_kernel_version():
     res = subprocess.check_output("uname -a", shell=True)
@@ -197,59 +249,6 @@ def guess_kernel_version():
         raise
 
     return ret
-
-
-def run_tracing(ift):
-    probes = ift.build_probes()
-    opts = ift.build_opts()
-    b = BPF(text=probes, cflags=opts)
-    events = b["events"]
-
-    flows = {}
-
-    def handle_event(cpu, data, size):
-        event = cast(data, POINTER(EventData)).contents
-        event_name = ift.resolve_event_name(event.event_id)
-
-        if str(event.l3_protocol) == L3_PROTO_TO_ID["IPv4"]:
-            saddr = ipaddress.IPv4Address(socket.ntohl(event.addrs.v4.saddr))
-            daddr = ipaddress.IPv4Address(socket.ntohl(event.addrs.v4.daddr))
-        elif str(event.l3_protocol) == L3_PROTO_TO_ID["IPv6"]:
-            saddr = ipaddress.IPv6Address(bytes(event.addrs.v6.saddr))
-            daddr = ipaddress.IPv6Address(bytes(event.addrs.v6.daddr))
-        else:
-            print(f"Unsupported l3 protocol {event.l3_protocol}")
-            return
-
-        flow = Flow(
-            l3_protocol=ID_TO_L3_PROTO[str(event.l3_protocol)],
-            l4_protocol=ID_TO_L4_PROTO[str(event.l4_protocol)],
-            saddr=str(saddr),
-            daddr=str(daddr),
-            sport=socket.ntohs(event.sport),
-            dport=socket.ntohs(event.dport),
-        )
-
-        event_list = flows.get(flow, [])
-        if event_name not in event_list:
-            event_list.append(event_name)
-
-        flows[flow] = event_list
-
-    events.open_perf_buffer(handle_event, page_cnt=64)
-
-    print("Trace ready!")
-    while 1:
-        try:
-            b.perf_buffer_poll()
-        except KeyboardInterrupt:
-            exit(0)
-
-        for f, e in flows.items():
-            proto = f.l4_protocol
-            src = f.saddr + ((":" + str(f.sport)) if f.sport != 0 else "")
-            dst = f.daddr + ((":" + str(f.dport)) if f.dport != 0 else "")
-            print(f"{proto}\t{src}\t->\t{dst}\t{e}")
 
 
 @click.command()
@@ -286,7 +285,7 @@ def main(kernel_version, l3proto, l4proto, saddr4, daddr4, saddr6, daddr6, sport
     init_ethertypes_mapping()
     init_protocol_mapping()
 
-    run_tracing(ift)
+    ift.run_tracing()
 
 
 if __name__ == "__main__":
