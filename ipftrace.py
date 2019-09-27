@@ -86,7 +86,7 @@ class IPFTracer:
         return self.id_to_ename[eid]
 
     def read_functions(self):
-        base_fname = f"conf/base/{self.args['kernel_version']}.yaml"
+        base_fname = f"conf/{self.args['kernel_version']}.yaml"
 
         try:
             with open(base_fname) as f:
