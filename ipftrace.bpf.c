@@ -1,12 +1,9 @@
-#pragma once
-
 #include <net/dst.h>
 #include <linux/skbuff.h>
-#include <uapi/linux/ip.h>
-#include <uapi/linux/ipv6.h>
-#include <uapi/linux/tcp.h>
-#include <uapi/linux/udp.h>
 #include <uapi/linux/ptrace.h>
+
+/* manifests/<version>/headers.h */
+#include <headers.h>
 
 #define member_read(destination, source_struct, source_member)                 \
   do{                                                                          \

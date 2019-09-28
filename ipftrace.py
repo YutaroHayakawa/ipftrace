@@ -2,6 +2,7 @@
 # Copyright (c) 2019 Yutaro Hayakawa
 # Licensed under the Apache License, Version 2.0 (the "License")
 #
+import os
 import re
 import yaml
 import click
@@ -86,18 +87,10 @@ class IPFTracer:
         return self.id_to_ename[eid]
 
     def read_functions(self):
-        base_fname = f"conf/{self.args['kernel_version']}.yaml"
-
-        try:
-            with open(base_fname) as f:
-                self.functions = yaml.load(f, Loader=yaml.FullLoader)["functions"]
-                return
-        except:
-            print(f"Failed to open {base_fname}. Falling back to default.")
-
-        with open("conf/base/default.yaml") as f:
+        base_fname = self.args["manifest_path"] + "/functions.yaml"
+        with open(base_fname) as f:
             self.functions = yaml.load(f, Loader=yaml.FullLoader)["functions"]
-
+            return
 
     def build_l3_protocol_opt(self, protocol):
         if protocol == "any":
@@ -144,6 +137,10 @@ class IPFTracer:
         else:
             return ["-D", direction + "PORT=" + port]
 
+    def build_include_opt(self):
+        pwd = os.getcwd()
+        return ["-I", pwd + "/" + self.args["manifest_path"]]
+
     def build_opts(self):
         opts = []
         opts += self.build_l3_protocol_opt(self.args["l3proto"])
@@ -154,6 +151,7 @@ class IPFTracer:
         opts += self.build_addr6_opt(self.args["daddr6"], "D")
         opts += self.build_port_opt(self.args["sport"], "S")
         opts += self.build_port_opt(self.args["dport"], "D")
+        opts += self.build_include_opt()
         return opts
 
     def build_probes(self):
@@ -180,7 +178,6 @@ class IPFTracer:
         return ret
 
     def list_functions(self):
-        print("Available groups and functions")
         for g, l in self.functions.items():
             print(g)
             for e in l:
@@ -252,7 +249,6 @@ def guess_kernel_version():
 
 
 @click.command()
-@click.option("-k", "--kernel-version", default=guess_kernel_version, type=str, help="Specify Linux kernel version")
 @click.option("-l3", "--l3proto", default="any", type=click.Choice(["any", "4", "6"]), help="Specify IP version")
 @click.option("-l4", "--l4proto", default="any", help="Specify L4 protocol")
 @click.option("-s4", "--saddr4", default="any", help="Specify IPv4 source address")
@@ -262,12 +258,12 @@ def guess_kernel_version():
 @click.option("-sp", "--sport", default="any", help="Specify source port number")
 @click.option("-dp", "--dport", default="any", help="Specify destination port number")
 @click.option("-l", "--list", is_flag=True, help="List available groups and functions")
-def main(kernel_version, l3proto, l4proto, saddr4, daddr4, saddr6, daddr6, sport, dport, list):
+@click.argument("manifest-path")
+def main(l3proto, l4proto, saddr4, daddr4, saddr6, daddr6, sport, dport, list, manifest_path):
     """
     Track the journey of the packets in Linux L3 layer
     """
     ift = IPFTracer(
-        kernel_version=kernel_version,
         l3proto=l3proto,
         l4proto=l4proto,
         saddr4=saddr4,
@@ -275,7 +271,8 @@ def main(kernel_version, l3proto, l4proto, saddr4, daddr4, saddr6, daddr6, sport
         saddr6=saddr6,
         daddr6=daddr6,
         sport=sport,
-        dport=dport
+        dport=dport,
+        manifest_path=manifest_path
     )
 
     if list:
