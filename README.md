@@ -76,18 +76,17 @@ ICMP		10.0.0.10	->	10.0.1.10	['seg6_output']
 IPv4		fc00::10	->	fc00::11	['ip6_output']
 ```
 
-## Manifest
+## Manifest file
 
-You need to sepcify the manifest directory. The directory should contain these files.
-
-### functions.yaml
-YAML file to enumerate the functions to trace
-
+You need to write the manifest YAML file to specify the functions to trace.
+Since the functions and argument types are changed depends on the kernel version,
+you may need to write it for each kernel version. But there are some useful enumeration
+of the rarely changed functions in the `examples` directory.
 ```
 functions:
-  ipv4:                    # Name of the group
-  - name: ip_local_deliver # Name of the function
-    args:                  # Types of the arguments it must contain struct sk_buff
+  ipv4:                     # Name of the group
+  - name: ip_local_deliver  # Name of the function
+    args:                   # Types of the arguments it must contain struct sk_buff
     - struct sk_buff *skb
 
   - name: ip_rcv
