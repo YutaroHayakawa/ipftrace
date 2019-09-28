@@ -249,7 +249,7 @@ def guess_kernel_version():
 
 
 @click.command()
-@click.option("-l3", "--l3proto", default="any", type=click.Choice(["any", "4", "6"]), help="Specify IP version")
+@click.option("-iv", "--ipversion", default="any", type=click.Choice(["any", "4", "6"]), help="Specify IP version")
 @click.option("-l4", "--l4proto", default="any", help="Specify L4 protocol")
 @click.option("-s4", "--saddr4", default="any", help="Specify IPv4 source address")
 @click.option("-d4", "--daddr4", default="any", help="Specify IPv4 destination address")
