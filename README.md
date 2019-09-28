@@ -9,31 +9,33 @@ It helps you with understanding how packets are routed inside the kernel.
 ## Usage
 
 ```
-Usage: ipftrace.py [OPTIONS]
+Usage: ipftrace.py [OPTIONS] MANIFEST_FILE
 
   Track the journey of the packets in Linux L3 layer
 
 Options:
-  -k, --kernel-version TEXT  Specify Linux kernel version
-  -l3, --l3proto [any|4|6]   Specify IP version
-  -l4, --l4proto TEXT        Specify L4 protocol
-  -s4, --saddr4 TEXT         Specify IPv4 source address
-  -d4, --daddr4 TEXT         Specify IPv4 destination address
-  -s6, --saddr6 TEXT         Specify IPv6 source address
-  -d6, --daddr6 TEXT         Specify IPv6 destination address
-  -sp, --sport TEXT          Specify source port number
-  -dp, --dport TEXT          Specify destination port number
-  -l, --list                 List available groups and functions
-  --help                     Show this message and exit.
+  -iv, --ipversion [any|4|6]  Specify IP version
+  -l4, --l4proto TEXT         Specify L4 protocol
+  -s4, --saddr4 TEXT          Specify IPv4 source address
+  -d4, --daddr4 TEXT          Specify IPv4 destination address
+  -s6, --saddr6 TEXT          Specify IPv6 source address
+  -d6, --daddr6 TEXT          Specify IPv6 destination address
+  -sp, --sport TEXT           Specify source port number
+  -dp, --dport TEXT           Specify destination port number
+  -l, --list                  List available groups and functions
+  --help                      Show this message and exit.
 ```
 
 ## Examples
 
+Trace the ICMP packets with source IPv4 address 10.0.1.10
+```
+$ sudo python ipftrace.py -iv 4 -l4 ICMP -s4 10.0.1.10
+```
+
 List functions can be tracked
 ```
-$ sudo python3.7 ipftrace.py -l
-
-Available events
+$ sudo python ipftrace.py -l
 ipv4
   ip_local_deliver
   ip_rcv
@@ -53,98 +55,54 @@ ipv6
 ...
 ```
 
-
-We can filter the packets by IP address, port number, protocol number and so on.
-```
-$ ping 8.8.8.8
-
-$ sudo python3.7 ipftrace.py -l3 IPv4 -l4 ICMP
-Trace ready!
-ICMP		10.0.2.15	->	8.8.8.8	['ip_output']
-ICMP		8.8.8.8	->	10.0.2.15	['ip_rcv', 'ip_route_input_noref', 'ip_local_deliver']
-...
-```
-
-We can trace the packets with lwtunnel excapsulation
+It can trace the packets with lwtunnel excapsulation
 ```
 $ ping 10.0.1.10
 
-$ sudo python3.7 ipftrace.py -s4 10.0.0.10 -s6 fc00::10
+$ sudo python ipftrace.py -s4 10.0.0.10 -s6 fc00::10
 Trace ready!
 ICMP		10.0.0.10	->	10.0.1.10	['lwtunnel_output', 'seg6_output']
 IPv4		fc00::10	->	fc00::11	['ip6_output']
 ...
 ```
 
-We can exclude the groups of tracing functions
+It can exclude the groups of tracing functions
 ```
 $ ping 10.0.1.10
 
-$ sudo python3.7 ipftrace.py -s4 10.0.0.10 -s6 fc00::10 -e lwt
+$ sudo python ipftrace.py -s4 10.0.0.10 -s6 fc00::10 -e lwt
 Trace ready!
 ICMP		10.0.0.10	->	10.0.1.10	['seg6_output']
 IPv4		fc00::10	->	fc00::11	['ip6_output']
 ```
 
-## How it works
-It's very simple. It just set the kprobe probes and manipurates the `struct sk_buff` inside the probes.
-The functions are enumerated in the `events.json`
+## Manifest
 
-Here we have some contents in the events.json
+You need to sepcify the manifest directory. The directory should contain these files.
+
+### functions.yaml
+YAML file to enumerate the functions to trace
 
 ```
-{
-  "events": {
-    "ipv4": [
-      {
-          "name": "ip_local_deliver",
-          "args": [
-              "struct sk_buff *skb"
-          ]
-      },
-      {
-          "name": "ip_rcv",
-          "args": [
-              "struct sk_buff *skb"
-          ]
-      },
-      ...
-      {
-          "name": "ipv6_rcv",
-          "args": [
-              "struct sk_buff *skb"
-          ]
-      },
-      {
-          "name": "ip6_input",
-          "args": [
-              "struct sk_buff *skb"
-          ]
-      },
-      ...
-    ],
-    "lwt": [
-      {
-          "name": "lwtunnel_input",
-          "args": [
-              "struct sk_buff *skb"
-          ]
-      },
-      ...
-    ],
-    "seg6": [
-      {
-          "name": "seg6_input",
-          "args": [
-              "struct sk_buff *skb"
-          ]
-      },
-      ...
-    ]
-  }
-}
-```
+functions:
+  ipv4:                    # Name of the group
+  - name: ip_local_deliver # Name of the function
+    args:                  # Types of the arguments it must contain struct sk_buff
+    - struct sk_buff *skb
 
-As you can see, it just enumerate the name of the functions and their argument types.
-Adding new functions is very straight forward. The only requirement is that the function
-takes `struct sk_buff` as argument.
+  - name: ip_rcv
+    args:
+    - struct sk_buff *skb
+
+  - name: ip_local_out
+    args:
+    - struct net *net
+    - struct sock *sk
+    - struct sk_buff *skb
+
+  - name: ip_output
+    args:
+    - struct net *net
+    - struct sock *sk
+    - struct sk_buff *skb
+```
