@@ -80,17 +80,15 @@ class IPFTracer:
         self.args = kwargs
         self.functions = None
         self.id_to_ename = []
-        self.read_functions()
+        self.read_manifest()
         self.probes = self.build_probes()
 
     def resolve_event_name(self, eid):
         return self.id_to_ename[eid]
 
-    def read_functions(self):
-        base_fname = self.args["manifest_path"] + "/functions.yaml"
-        with open(base_fname) as f:
+    def read_manifest(self):
+        with open(self.args["manifest_file"]) as f:
             self.functions = yaml.load(f, Loader=yaml.FullLoader)["functions"]
-            return
 
     def build_l3_protocol_opt(self, protocol):
         if protocol == "any":
@@ -98,18 +96,15 @@ class IPFTracer:
         else:
             return ["-D", "L3_PROTOCOL=" + L3_PROTO_TO_ID[protocol]]
 
-
     def build_l4_protocol_opt(self, protocol):
         if protocol == "any":
             return ["-D", "L4_PROTOCOL_ANY"]
         else:
             return ["-D", "L4_PROTOCOL=" + L4_PROTO_TO_ID[protocol]]
 
-
     def inet_addr4(self, addr):
         a = ipaddress.IPv4Address(addr).packed
         return str(int.from_bytes(a, byteorder="little"))
-
 
     def build_addr4_opt(self, addr, direction):
         if addr == "any":
@@ -117,12 +112,10 @@ class IPFTracer:
         else:
             return ["-D", direction + "ADDRV4=" + self.inet_addr4(addr)]
 
-
     def inet_addr6(self, addr):
         p = ipaddress.IPv6Address(addr).packed
         a = ",".join(list(map(lambda b: str(b), p)))
         return a
-
 
     def build_addr6_opt(self, addr, direction):
         if addr == "any":
@@ -137,10 +130,6 @@ class IPFTracer:
         else:
             return ["-D", direction + "PORT=" + port]
 
-    def build_include_opt(self):
-        pwd = os.getcwd()
-        return ["-I", pwd + "/" + self.args["manifest_path"]]
-
     def build_opts(self):
         opts = []
         opts += self.build_l3_protocol_opt(self.args["l3proto"])
@@ -151,7 +140,6 @@ class IPFTracer:
         opts += self.build_addr6_opt(self.args["daddr6"], "D")
         opts += self.build_port_opt(self.args["sport"], "S")
         opts += self.build_port_opt(self.args["dport"], "D")
-        opts += self.build_include_opt()
         return opts
 
     def build_probes(self):
@@ -236,18 +224,6 @@ class IPFTracer:
                 print(f"{proto}\t{src}\t->\t{dst}\t{e}")
 
 
-def guess_kernel_version():
-    res = subprocess.check_output("uname -a", shell=True)
-
-    try:
-        ret = re.search(r"([0-9]+\.[0-9]+\.[0-9]+)", str(res)).group(1)
-    except:
-        print("Couldn't guess the kernel version. Please specify it manually.")
-        raise
-
-    return ret
-
-
 @click.command()
 @click.option("-iv", "--ipversion", default="any", type=click.Choice(["any", "4", "6"]), help="Specify IP version")
 @click.option("-l4", "--l4proto", default="any", help="Specify L4 protocol")
@@ -258,11 +234,17 @@ def guess_kernel_version():
 @click.option("-sp", "--sport", default="any", help="Specify source port number")
 @click.option("-dp", "--dport", default="any", help="Specify destination port number")
 @click.option("-l", "--list", is_flag=True, help="List available groups and functions")
-@click.argument("manifest-path")
-def main(l3proto, l4proto, saddr4, daddr4, saddr6, daddr6, sport, dport, list, manifest_path):
+@click.argument("manifest-file")
+def main(ipversion, l4proto, saddr4, daddr4, saddr6, daddr6, sport, dport, list, manifest_file):
     """
     Track the journey of the packets in Linux L3 layer
     """
+
+    if ipversion == "any":
+        l3proto = "any"
+    else:
+        l3proto = "IPv" + ipversion
+
     ift = IPFTracer(
         l3proto=l3proto,
         l4proto=l4proto,
@@ -272,7 +254,7 @@ def main(l3proto, l4proto, saddr4, daddr4, saddr6, daddr6, sport, dport, list, m
         daddr6=daddr6,
         sport=sport,
         dport=dport,
-        manifest_path=manifest_path
+        manifest_file=manifest_file
     )
 
     if list:
