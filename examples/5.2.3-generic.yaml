@@ -20,6 +20,12 @@ functions:
     - struct sock *sk
     - struct sk_buff *skb
 
+  - name: __ip_finish_output
+    args:
+    - struct net *net
+    - struct sock *sk
+    - struct sk_buff *skb
+
   - name: ip_forward
     args:
     - struct sk_buff *skb
@@ -144,3 +150,50 @@ functions:
     - struct net *net
     - struct sock *sk
     - struct sk_buff *skb
+
+  ipip:
+  - name: ipip_rcv
+    args:
+    - struct sk_buff *skb
+
+  - name: ipip_tunnel_xmit
+    args:
+    - struct sk_buff *skb
+    - struct net_device *dev
+
+  ip_tunnel:
+  - name: ip_tunnel_rcv
+    args:
+    - struct sk_buff *skb
+
+  - name: ip_tunnel_xmit
+    args:
+    - struct sk_buff *skb
+    - struct net_device *dev
+
+  - name: iptunnel_xmit
+    args:
+    - void *sk
+    - void *rt
+    - struct sk_buff *skb
+
+  gso:
+  - name: __skb_gso_segment
+    args:
+    - struct sk_buff *skb
+    - netdev_features_t features
+
+  - name: skb_mac_gso_segment
+    args:
+    - struct sk_buff *skb
+    - netdev_features_t features
+
+  - name: ipip_gso_segment
+    args:
+    - struct sk_buff *skb
+    - netdev_features_t features
+
+  - name: inet_gso_segment
+    args:
+    - struct sk_buff *skb
+    - netdev_features_t features
