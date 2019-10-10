@@ -163,6 +163,63 @@ class IPFTracer:
                 ret += probe
                 eid += 1
 
+        #
+        # Special probes to indicate the end of the function list
+        #
+
+        #
+        # The packet was consumed correctly or filtered out by netfilters
+        #
+        self.id_to_ename.append("end")
+        ret += textwrap.dedent(
+            f"""
+            void kprobe__kfree_skb(struct pt_regs *ctx, struct sk_buff *skb) {{
+              struct event_data e = {{ {eid} }};
+              if (!match(ctx, skb, &e)) {{
+                return;
+              }}
+              action(ctx, &e);
+            }}
+            """
+        )
+
+        #
+        # The packet was passed to the network interfaces
+        #
+        # This includes the case the packet crosses the netns boundary through veth
+        # or entered into the tunnel through tunneling interfaces
+        #
+        self.id_to_ename.append("end")
+        ret += textwrap.dedent(
+            f"""
+            void kprobe__dev_queue_xmit(struct pt_regs *ctx, struct sk_buff *skb) {{
+              struct event_data e = {{ {eid} }};
+              if (!match(ctx, skb, &e)) {{
+                return;
+              }}
+              action(ctx, &e);
+            }}
+            """
+        )
+
+        #
+        # The packet was passed to the upper layer protocols
+        #
+        self.id_to_ename.append("end")
+        ret += textwrap.dedent(
+            f"""
+            void kprobe__ip_protocol_deliver_rcu(struct pt_regs *ctx, struct net *net, struct sk_buff *skb) {{
+              struct event_data e = {{ {eid} }};
+              if (!match(ctx, skb, &e)) {{
+                return;
+              }}
+              action(ctx, &e);
+            }}
+            """
+        )
+
+        # TODO: Find any other cases or more sophiciticated ways
+
         return ret
 
     def list_functions(self):
@@ -179,6 +236,13 @@ class IPFTracer:
 
         flows = {}
 
+        #
+        # In case of the lost, we should reset the flows, because we may
+        # miss the "end" events
+        #
+        def handle_lost(lost):
+            flows.clear()
+
         def handle_event(cpu, data, size):
             event = cast(data, POINTER(EventData)).contents
             event_name = self.resolve_event_name(event.event_id)
@@ -193,22 +257,38 @@ class IPFTracer:
                 print(f"Unsupported l3 protocol {event.l3_protocol}")
                 return
 
+            l3_proto = ID_TO_L3_PROTO[str(event.l3_protocol)]
+            l4_proto = ID_TO_L4_PROTO[str(event.l4_protocol)]
+            sport = socket.ntohs(event.sport)
+            dport = socket.ntohs(event.dport)
+
             flow = Flow(
-                l3_protocol=ID_TO_L3_PROTO[str(event.l3_protocol)],
-                l4_protocol=ID_TO_L4_PROTO[str(event.l4_protocol)],
+                l3_protocol=l3_proto,
+                l4_protocol=l4_proto,
                 saddr=str(saddr),
                 daddr=str(daddr),
-                sport=socket.ntohs(event.sport),
-                dport=socket.ntohs(event.dport),
+                sport=sport,
+                dport=dport,
             )
 
             event_list = flows.get(flow, [])
-            if event_name not in event_list:
+
+            if event_name == "end":
+                #
+                # When the "end" event is the only event in the list, ignore it.
+                # This happens when the packets passed to the IP layer through
+                # dst_input == ip_protocol_deliver_rcu in the tunneling interface.
+                #
+                if len(event_list) != 0:
+                    src = str(saddr) + (":" + str(sport) if sport != 0 else "")
+                    dst = str(daddr) + (":" + str(dport) if dport != 0 else "")
+                    print(f"{l4_proto}\t{src}\t->\t{dst}\t{event_list}")
+                    del flows[flow]
+            else:
                 event_list.append(event_name)
+                flows[flow] = event_list
 
-            flows[flow] = event_list
-
-        events.open_perf_buffer(handle_event, page_cnt=64)
+        events.open_perf_buffer(handle_event, lost_cb=handle_lost, page_cnt=64)
 
         print("Trace ready!")
         while 1:
@@ -216,12 +296,6 @@ class IPFTracer:
                 b.perf_buffer_poll()
             except KeyboardInterrupt:
                 exit(0)
-
-            for f, e in flows.items():
-                proto = f.l4_protocol
-                src = f.saddr + ((":" + str(f.sport)) if f.sport != 0 else "")
-                dst = f.daddr + ((":" + str(f.dport)) if f.dport != 0 else "")
-                print(f"{proto}\t{src}\t->\t{dst}\t{e}")
 
 
 @click.command()
