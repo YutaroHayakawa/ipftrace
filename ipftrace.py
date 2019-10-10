@@ -218,6 +218,23 @@ class IPFTracer:
             """
         )
 
+        #
+        # The packet was encapsulated by IP tunneling protocols like IPIP, GRE, SIT.
+        #
+        self.id_to_ename.append("end")
+        ret += textwrap.dedent(
+            f"""
+            void kprobe__iptunnel_xmit(struct pt_regs *ctx, struct sock *sk,
+                                       struct rtable *rt, struct sk_buff *skb) {{
+              struct event_data e = {{ {eid} }};
+              if (!match(ctx, skb, &e)) {{
+                return;
+              }}
+              action(ctx, &e);
+            }}
+            """
+        )
+
         # TODO: Find any other cases or more sophiciticated ways
 
         return ret
