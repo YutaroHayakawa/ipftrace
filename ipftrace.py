@@ -41,6 +41,13 @@ def init_protocol_mapping():
         ID_TO_L4_PROTO[spl[1]] = spl[2]
 
 
+#
+# Egress functions to terminate the tracing. The __kfree_skb is for the case which the
+# packet was dropped by the netfilter.
+#
+EGRESS_FUNCTIONS = ["ip_finish_output2", "ip_local_deliver_finish", "ip6_finish_output2", "ip6_input_finish", "kfree_skb"]
+
+
 class V4Addrs(Structure):
     _fields_ = [("saddr", c_uint32), ("daddr", c_uint32)]
 
@@ -163,80 +170,6 @@ class IPFTracer:
                 ret += probe
                 eid += 1
 
-        #
-        # Special probes to indicate the end of the function list
-        #
-
-        #
-        # The packet was consumed correctly or filtered out by netfilters
-        #
-        self.id_to_ename.append("end")
-        ret += textwrap.dedent(
-            f"""
-            void kprobe__kfree_skb(struct pt_regs *ctx, struct sk_buff *skb) {{
-              struct event_data e = {{ {eid} }};
-              if (!match(ctx, skb, &e)) {{
-                return;
-              }}
-              action(ctx, &e);
-            }}
-            """
-        )
-
-        #
-        # The packet was passed to the network interfaces
-        #
-        # This includes the case the packet crosses the netns boundary through veth
-        # or entered into the tunnel through tunneling interfaces
-        #
-        self.id_to_ename.append("end")
-        ret += textwrap.dedent(
-            f"""
-            void kprobe__dev_queue_xmit(struct pt_regs *ctx, struct sk_buff *skb) {{
-              struct event_data e = {{ {eid} }};
-              if (!match(ctx, skb, &e)) {{
-                return;
-              }}
-              action(ctx, &e);
-            }}
-            """
-        )
-
-        #
-        # The packet was passed to the upper layer protocols
-        #
-        self.id_to_ename.append("end")
-        ret += textwrap.dedent(
-            f"""
-            void kprobe__ip_protocol_deliver_rcu(struct pt_regs *ctx, struct net *net, struct sk_buff *skb) {{
-              struct event_data e = {{ {eid} }};
-              if (!match(ctx, skb, &e)) {{
-                return;
-              }}
-              action(ctx, &e);
-            }}
-            """
-        )
-
-        #
-        # The packet was encapsulated by IP tunneling protocols like IPIP, GRE, SIT.
-        #
-        self.id_to_ename.append("end")
-        ret += textwrap.dedent(
-            f"""
-            void kprobe__iptunnel_xmit(struct pt_regs *ctx, struct sock *sk,
-                                       struct rtable *rt, struct sk_buff *skb) {{
-              struct event_data e = {{ {eid} }};
-              if (!match(ctx, skb, &e)) {{
-                return;
-              }}
-              action(ctx, &e);
-            }}
-            """
-        )
-
-        # TODO: Find any other cases or more sophiciticated ways
-
         return ret
 
     def list_functions(self):
@@ -290,13 +223,9 @@ class IPFTracer:
 
             event_list = flows.get(flow, [])
 
-            if event_name == "end":
-                #
-                # When the "end" event is the only event in the list, ignore it.
-                # This happens when the packets passed to the IP layer through
-                # dst_input == ip_protocol_deliver_rcu in the tunneling interface.
-                #
-                if len(event_list) != 0:
+            if event_name in EGRESS_FUNCTIONS:
+                event_list.append(event_name)
+                if len(event_list) != 1:
                     src = str(saddr) + (":" + str(sport) if sport != 0 else "")
                     dst = str(daddr) + (":" + str(dport) if dport != 0 else "")
                     print(f"{l4_proto}\t{src}\t->\t{dst}\t{event_list}")

@@ -36,18 +36,19 @@ struct event_data {
 static inline bool
 ipv4_match(uint8_t **head, struct event_data *e)
 {
+  bool ret = true;
   struct iphdr iph;
 
   bpf_probe_read(&iph, sizeof(iph), *head);
 
   e->v4.saddr = iph.saddr;
 #ifndef SADDRV4_ANY
-  if (e->v4.saddr != SADDRV4) return false;
+  if (e->v4.saddr != SADDRV4) ret = false;
 #endif
 
   e->v4.daddr = iph.daddr;
 #ifndef DADDRV4_ANY
-  if (e->v4.daddr != DADDRV4) return false;
+  if (e->v4.daddr != DADDRV4) ret = false;
 #endif
 
   /*
@@ -57,7 +58,7 @@ ipv4_match(uint8_t **head, struct event_data *e)
 
   e->l4_protocol = iph.protocol;
 
-  return true;
+  return ret;
 }
 
 static inline bool
@@ -183,6 +184,10 @@ match(struct pt_regs *ctx, struct sk_buff *skb, struct event_data *e)
   if (e->l4_protocol != L4_PROTOCOL) return false;
 #endif
 
+  /* 
+   * We will match to the inner most header for tunneling protocols
+   * so, ignore the L3 protocol `matched` flag for them.
+   */
   switch (e->l4_protocol) {
     case 6: /* TCP */
       matched = tcp_match(&head, e);

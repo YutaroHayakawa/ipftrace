@@ -1,10 +1,10 @@
 functions:
   ipv4:
-  - name: ip_local_deliver
+  - name: ip_rcv
     args:
     - struct sk_buff *skb
 
-  - name: ip_rcv
+  - name: ip_local_deliver
     args:
     - struct sk_buff *skb
 
@@ -20,7 +20,15 @@ functions:
     - struct sock *sk
     - struct sk_buff *skb
 
-  - name: __ip_finish_output
+  # Don't delete this
+  - name: ip_finish_output2
+    args:
+    - struct net *net
+    - struct sock *sk
+    - struct sk_buff *skb
+
+  # Don't delete this
+  - name: ip_local_deliver_finish
     args:
     - struct net *net
     - struct sock *sk
@@ -50,8 +58,6 @@ functions:
     args:
     - struct sock *sk
     - struct sk_buff *skb
-    - const struct flowi4 *fl4
-    - __u8 tos
 
   - name: ip_do_fragment
     args:
@@ -125,6 +131,20 @@ functions:
     args:
     - struct sk_buff *skb
 
+  # Don't delete this
+  - name: ip6_finish_output2
+    args:
+    - struct net *net
+    - struct sock *sk
+    - struct sk_buff *skb
+
+  # Don't delete this
+  - name: ip6_input_finish
+    args:
+    - struct net *net
+    - struct sock *sk
+    - struct sk_buff *skb
+
   lwt:
   - name: lwtunnel_input
     args:
@@ -159,41 +179,44 @@ functions:
   - name: ipip_tunnel_xmit
     args:
     - struct sk_buff *skb
-    - struct net_device *dev
 
   ip_tunnel:
   - name: ip_tunnel_rcv
     args:
+    - void *tunnel  # struct ip_tunnel *tunnel
     - struct sk_buff *skb
 
   - name: ip_tunnel_xmit
     args:
-    - struct sk_buff *skb
-    - struct net_device *dev
-
-  - name: iptunnel_xmit
-    args:
-    - void *sk
-    - void *rt
     - struct sk_buff *skb
 
   gso:
   - name: __skb_gso_segment
     args:
     - struct sk_buff *skb
-    - netdev_features_t features
 
   - name: skb_mac_gso_segment
     args:
     - struct sk_buff *skb
-    - netdev_features_t features
 
   - name: ipip_gso_segment
     args:
     - struct sk_buff *skb
-    - netdev_features_t features
+
+  - name: tcp_gso_segment
+    args:
+    - struct sk_buff *skb
 
   - name: inet_gso_segment
     args:
     - struct sk_buff *skb
-    - netdev_features_t features
+
+  - name: validate_xmit_skb
+    args:
+    - struct sk_buff *skb
+
+  misc:
+  # Don't delete this
+  - name: kfree_skb
+    args:
+    - struct sk_buff *skb
