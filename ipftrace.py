@@ -9,6 +9,7 @@ import click
 import socket
 import argparse
 import textwrap
+import importlib
 import ipaddress
 import subprocess
 import dataclasses
@@ -62,6 +63,7 @@ class EventData(Structure):
         ("addrs", IPAddrs),
         ("sport", c_uint16),
         ("dport", c_uint16),
+        ("data", c_uint8 * 32),
     ]
 
 
@@ -75,6 +77,18 @@ class Flow:
     dport: int
 
 
+@dataclasses.dataclass(eq=True, frozen=True)
+class EventLog:
+    event_name: str
+    custom_data: str
+
+    def __repr__(self):
+        if self.custom_data == None:
+            return f"{self.event_name}"
+        else:
+            return f"{self.event_name}{self.custom_data}"
+
+
 class IPFTracer:
     def __init__(self, **kwargs):
         self.args = kwargs
@@ -83,6 +97,7 @@ class IPFTracer:
         self.id_to_ename = []
         self.read_manifest()
         self.probes = self.build_probes()
+        self.module = self.load_module()
 
     def resolve_event_name(self, eid):
         return self.id_to_ename[eid]
@@ -90,6 +105,11 @@ class IPFTracer:
     def read_manifest(self):
         with open(self.args["manifest_file"]) as f:
             self.functions = yaml.load(f, Loader=yaml.FullLoader)["functions"]
+
+    def load_module(self):
+        if self.args["module"] is None:
+            return None
+        return importlib.import_module(self.args["module"])
 
     def build_l3_protocol_opt(self, protocol):
         if protocol == "any":
@@ -147,6 +167,17 @@ class IPFTracer:
         eid = 0
         ret = open("ipftrace.bpf.c").read()
 
+        try:
+            ret += self.module.gen_match()
+        except:
+            ret += textwrap.dedent(
+                """
+                static inline bool custom_match(void *ctx, struct sk_buff *skb, uint8_t *data) {
+                  return true;
+                }
+                """
+            )
+
         for group, events in self.functions.items():
             for e in events:
                 if e.get("egress", False):
@@ -157,6 +188,9 @@ class IPFTracer:
                     void kprobe__{e['name']}({ ', '.join(['struct pt_regs *ctx'] + e['args']) }) {{
                       struct event_data e = {{ {eid} }};
                       if (!match(ctx, skb, &e)) {{
+                        return;
+                      }}
+                      if (!custom_match(ctx, skb, e.data)) {{
                         return;
                       }}
                       action(ctx, &e);
@@ -217,17 +251,25 @@ class IPFTracer:
                 dport=dport,
             )
 
-            event_list = flows.get(flow, [])
+            event_logs = flows.get(flow, [])
+
+            try:
+                custom_data = self.module.parse_data(event.data)
+            except Exception as e:
+                print(e)
+                # This catches the case self.module == None
+                custom_data = None
+
+            event_logs.append(EventLog(event_name, custom_data))
 
             if event_name in self.egress_functions:
                 if len(event_logs) != 1:
                     src = str(saddr) + (":" + str(sport) if sport != 0 else "")
                     dst = str(daddr) + (":" + str(dport) if dport != 0 else "")
-                    print(f"{l4_proto}\t{src}\t->\t{dst}\t{event_list}")
+                    print(f"{l4_proto}\t{src}\t->\t{dst}\n{event_logs}")
                     del flows[flow]
             else:
-                event_list.append(event_name)
-                flows[flow] = event_list
+                flows[flow] = event_logs
 
         events.open_perf_buffer(handle_event, lost_cb=handle_lost, page_cnt=64)
 
@@ -248,9 +290,10 @@ class IPFTracer:
 @click.option("-d6", "--daddr6", default="any", help="Specify IPv6 destination address")
 @click.option("-sp", "--sport", default="any", help="Specify source port number")
 @click.option("-dp", "--dport", default="any", help="Specify destination port number")
+@click.option("-m", "--module", default=None, help="Specify custom match module name")
 @click.option("-l", "--list", is_flag=True, help="List available groups and functions")
 @click.argument("manifest-file")
-def main(ipversion, l4proto, saddr4, daddr4, saddr6, daddr6, sport, dport, list, manifest_file):
+def main(ipversion, l4proto, saddr4, daddr4, saddr6, daddr6, sport, dport, module, list, manifest_file):
     """
     Track the journey of the packets in Linux L3 layer
     """
@@ -269,6 +312,7 @@ def main(ipversion, l4proto, saddr4, daddr4, saddr6, daddr6, sport, dport, list,
         daddr6=daddr6,
         sport=sport,
         dport=dport,
+        module=module,
         manifest_file=manifest_file
     )
 

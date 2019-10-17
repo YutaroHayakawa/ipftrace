@@ -31,6 +31,7 @@ struct event_data {
   };
   uint16_t sport;
   uint16_t dport;
+  uint8_t data[64];
 };
 
 static inline bool
