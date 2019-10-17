@@ -41,13 +41,6 @@ def init_protocol_mapping():
         ID_TO_L4_PROTO[spl[1]] = spl[2]
 
 
-#
-# Egress functions to terminate the tracing. The __kfree_skb is for the case which the
-# packet was dropped by the netfilter.
-#
-EGRESS_FUNCTIONS = ["ip_finish_output2", "ip_local_deliver_finish", "ip6_finish_output2", "ip6_input_finish", "kfree_skb"]
-
-
 class V4Addrs(Structure):
     _fields_ = [("saddr", c_uint32), ("daddr", c_uint32)]
 
@@ -86,6 +79,7 @@ class IPFTracer:
     def __init__(self, **kwargs):
         self.args = kwargs
         self.functions = None
+        self.egress_functions = []
         self.id_to_ename = []
         self.read_manifest()
         self.probes = self.build_probes()
@@ -155,6 +149,8 @@ class IPFTracer:
 
         for group, events in self.functions.items():
             for e in events:
+                if e.get("egress", False):
+                    self.egress_functions.append(e["name"])
                 self.id_to_ename.append(e["name"])
                 probe = textwrap.dedent(
                     f"""
@@ -223,9 +219,8 @@ class IPFTracer:
 
             event_list = flows.get(flow, [])
 
-            if event_name in EGRESS_FUNCTIONS:
-                event_list.append(event_name)
-                if len(event_list) != 1:
+            if event_name in self.egress_functions:
+                if len(event_logs) != 1:
                     src = str(saddr) + (":" + str(sport) if sport != 0 else "")
                     dst = str(daddr) + (":" + str(dport) if dport != 0 else "")
                     print(f"{l4_proto}\t{src}\t->\t{dst}\t{event_list}")

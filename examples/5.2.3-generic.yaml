@@ -20,19 +20,19 @@ functions:
     - struct sock *sk
     - struct sk_buff *skb
 
-  # Don't delete this
   - name: ip_finish_output2
     args:
     - struct net *net
     - struct sock *sk
     - struct sk_buff *skb
+    egress: true
 
-  # Don't delete this
   - name: ip_local_deliver_finish
     args:
     - struct net *net
     - struct sock *sk
     - struct sk_buff *skb
+    egress: true
 
   - name: ip_forward
     args:
@@ -137,13 +137,14 @@ functions:
     - struct net *net
     - struct sock *sk
     - struct sk_buff *skb
+    egress: true
 
-  # Don't delete this
   - name: ip6_input_finish
     args:
     - struct net *net
     - struct sock *sk
     - struct sk_buff *skb
+    egress: true
 
   lwt:
   - name: lwtunnel_input
@@ -214,9 +215,10 @@ functions:
   - name: validate_xmit_skb
     args:
     - struct sk_buff *skb
+    egress: true
 
   misc:
-  # Don't delete this
   - name: kfree_skb
     args:
     - struct sk_buff *skb
+    egress: true
