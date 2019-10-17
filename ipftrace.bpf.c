@@ -6,13 +6,13 @@
 #include <uapi/linux/ipv6.h>
 #include <uapi/linux/ptrace.h>
 
-#define member_read(destination, source_struct, source_member)                 \
-  do{                                                                          \
-    bpf_probe_read(                                                            \
-      destination,                                                             \
-      sizeof(source_struct->source_member),                                    \
-      ((char*)source_struct) + offsetof(typeof(*source_struct), source_member) \
-    );                                                                         \
+#define member_read(_dst, _src, _member)                 \
+  do{                                                    \
+    bpf_probe_read(                                      \
+      _dst,                                              \
+      sizeof(_src->_member),                             \
+      ((char*)_src) + offsetof(typeof(*_src), _member)   \
+    );                                                   \
   } while(0)
 
 struct event_data {
