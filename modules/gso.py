@@ -40,4 +40,4 @@ class GSOData(Structure):
 
 def parse_data(data):
     gd = cast(data, POINTER(GSOData)).contents
-    return f" (gso_size: {gd.gso_size} gso_segs: {gd.gso_segs} gso_type: {gd.gso_segs})"
+    return f" (gso_size: {gd.gso_size} gso_segs: {gd.gso_segs} gso_type: {gd.gso_type})"
