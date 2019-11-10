@@ -99,9 +99,6 @@ class IPFTracer:
         self.probes = self.build_probes()
         self.module = self.load_module()
 
-    def resolve_event_name(self, eid):
-        return self.id_to_ename[eid]
-
     def read_manifest(self):
         with open(self.args["manifest_file"]) as f:
             self.functions = yaml.load(f, Loader=yaml.FullLoader)["functions"]
@@ -164,7 +161,6 @@ class IPFTracer:
         return opts
 
     def build_probes(self):
-        eid = 0
         ret = open("ipftrace.bpf.c").read()
 
         try:
@@ -178,29 +174,28 @@ class IPFTracer:
                 """
             )
 
+        return ret
+
+    def attach_probes(self):
+        probes = self.build_probes()
+        opts = self.build_opts()
+        b = BPF(text=probes, cflags=opts)
+
         for group, events in self.functions.items():
             for e in events:
-                if e.get("egress", False):
-                    self.egress_functions.append(e["name"])
-                self.id_to_ename.append(e["name"])
-                probe = textwrap.dedent(
-                    f"""
-                    void kprobe__{e['name']}({ ', '.join(['struct pt_regs *ctx'] + e['args']) }) {{
-                      struct event_data e = {{ {eid} }};
-                      if (!match(ctx, skb, &e)) {{
-                        return;
-                      }}
-                      if (!custom_match(ctx, skb, e.data)) {{
-                        return;
-                      }}
-                      action(ctx, &e);
-                    }}
-                    """
-                )
-                ret += probe
-                eid += 1
+                name = e["name"]
+                skb_pos = e["skb_pos"]
 
-        return ret
+                if skb_pos > 4:
+                    print("Invalid skb_pos. It should be lower than 4")
+                    exit(1)
+
+                b.attach_kprobe(event=name, fn_name=f"ipftrace_main{skb_pos}")
+
+                if e.get("egress", False):
+                    self.egress_functions.append(name)
+
+        return b
 
     def list_functions(self):
         for g, l in self.functions.items():
@@ -209,23 +204,22 @@ class IPFTracer:
                 print(f"  {e['name']}")
 
     def run_tracing(self):
-        probes = self.build_probes()
-        opts = self.build_opts()
-        b = BPF(text=probes, cflags=opts)
+        b = self.attach_probes()
         events = b["events"]
 
         flows = {}
 
         #
         # In case of the lost, we should reset the flows, because we may
-        # miss the "end" events
+        # miss the egress events
         #
         def handle_lost(lost):
             flows.clear()
 
         def handle_event(cpu, data, size):
             event = cast(data, POINTER(EventData)).contents
-            event_name = self.resolve_event_name(event.event_id)
+            fname = BPF.ksym(event.faddr).decode("utf-8")
+            tstamp = str(event.tstamp)
 
             if str(event.l3_protocol) == L3_PROTO_TO_ID["IPv4"]:
                 saddr = ipaddress.IPv4Address(socket.ntohl(event.addrs.v4.saddr))
@@ -279,7 +273,6 @@ class IPFTracer:
                 b.perf_buffer_poll()
             except KeyboardInterrupt:
                 exit(0)
-
 
 @click.command()
 @click.option("-iv", "--ipversion", default="any", type=click.Choice(["any", "4", "6"]), help="Specify IP version")
