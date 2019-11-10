@@ -1,9 +1,8 @@
 # ipftrace
-ipftrace is a tool which tracks the functions that the packets have gone through inside the Linux kernel's L3 layer.
-It helps you with understanding how packets are routed inside the kernel.
+ipftrace is a tool which tracks the functions that the packets have gone through inside the Linux kernel.
 
 ## Dependencies
-- Python3.7
+- Python3.7 or above
 - [BCC](https://github.com/iovisor/bcc)
 
 ## Usage
@@ -31,7 +30,7 @@ Options:
 
 Trace the ICMP packets with source IPv4 address 10.0.1.10
 ```
-$ sudo python ipftrace.py -iv 4 -l4 ICMP -s4 10.0.1.10
+$ sudo python ipftrace.py -iv 4 -l4 ICMP -s4 10.0.1.10 examples/generic.yaml
 ICMP	10.0.1.10	->	10.0.1.11
       Time Stamp  Function
 1980357215835183  ip_output
@@ -50,7 +49,7 @@ ICMP	10.0.1.11	->	10.0.1.10
 
 Trace the GSO behavior with custom module
 ```
-$ sudo python ipftrace.py -iv 4 -l4 TCP -d4 10.0.1.11
+$ sudo python ipftrace.py -iv 4 -l4 TCP -d4 10.0.1.11 -m modules.gso examples/generic.yaml
 
 ...
 
