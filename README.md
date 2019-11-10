@@ -22,6 +22,7 @@ Options:
   -d6, --daddr6 TEXT          Specify IPv6 destination address
   -sp, --sport TEXT           Specify source port number
   -dp, --dport TEXT           Specify destination port number
+  -m, --module TEXT           Specify custom match module name
   -l, --list                  List available groups and functions
   --help                      Show this message and exit.
 ```
@@ -31,11 +32,43 @@ Options:
 Trace the ICMP packets with source IPv4 address 10.0.1.10
 ```
 $ sudo python ipftrace.py -iv 4 -l4 ICMP -s4 10.0.1.10
+ICMP	10.0.1.10	->	10.0.1.11
+      Time Stamp  Function
+1980357215835183  ip_output
+1980357215867067  ip_finish_output2
+1980357215884858  validate_xmit_skb
+1980357215887496  dev_hard_start_xmit
+
+ICMP	10.0.1.11	->	10.0.1.10
+      Time Stamp  Function
+1980357216186467  ip_rcv
+1980357216191031  ip_route_input_noref
+1980357216193923  ip_local_deliver
+1980357216196007  ip_local_deliver_finish
+1980357216202247  kfree_skb
+```
+
+Trace the GSO behavior with custom module
+```
+$ sudo python ipftrace.py -iv 4 -l4 TCP -d4 10.0.1.11
+
+...
+
+TCP	10.0.1.10:52262	->	10.0.1.11:31337
+      Time Stamp  Function             Custom Data
+1980216709532312  ip_output            (len: 2101 gso_size: 1448 gso_segs: 2 gso_type: SKB_GSO_TCPV4)
+1980216709556754  ip_finish_output2    (len: 2101 gso_size: 1448 gso_segs: 2 gso_type: SKB_GSO_TCPV4)
+1980216709564468  validate_xmit_skb    (len: 2115 gso_size: 1448 gso_segs: 2 gso_type: SKB_GSO_TCPV4)
+1980216709567884  __skb_gso_segment    (len: 2115 gso_size: 1448 gso_segs: 2 gso_type: SKB_GSO_TCPV4)
+1980216709570449  skb_mac_gso_segment  (len: 2115 gso_size: 1448 gso_segs: 2 gso_type: SKB_GSO_TCPV4)
+1980216709573461  inet_gso_segment     (len: 2101 gso_size: 1448 gso_segs: 2 gso_type: SKB_GSO_TCPV4)
+1980216709581026  tcp_gso_segment      (len: 2081 gso_size: 1448 gso_segs: 2 gso_type: SKB_GSO_TCPV4)
+1980216709591009  dev_hard_start_xmit  (len: 1514 gso_size: 0 gso_segs: 0 gso_type: )
 ```
 
 List functions can be tracked
 ```
-$ sudo python ipftrace.py -l
+$ sudo python ipftrace.py -l examples/generic.yaml
 ipv4
   ip_local_deliver
   ip_rcv
@@ -53,55 +86,4 @@ ipv6
   ipv6_rcv
   ip6_input
 ...
-```
-
-It can trace the packets with lwtunnel excapsulation
-```
-$ ping 10.0.1.10
-
-$ sudo python ipftrace.py -s4 10.0.0.10 -s6 fc00::10
-Trace ready!
-ICMP		10.0.0.10	->	10.0.1.10	['lwtunnel_output', 'seg6_output']
-IPv4		fc00::10	->	fc00::11	['ip6_output']
-...
-```
-
-It can exclude the groups of tracing functions
-```
-$ ping 10.0.1.10
-
-$ sudo python ipftrace.py -s4 10.0.0.10 -s6 fc00::10 -e lwt
-Trace ready!
-ICMP		10.0.0.10	->	10.0.1.10	['seg6_output']
-IPv4		fc00::10	->	fc00::11	['ip6_output']
-```
-
-## Manifest file
-
-You need to write the manifest YAML file to specify the functions to trace.
-Since the functions and argument types are changed depends on the kernel version,
-you may need to write it for each kernel version. But there are some useful enumeration
-of the rarely changed functions in the `examples` directory.
-```
-functions:
-  ipv4:                     # Name of the group
-  - name: ip_local_deliver  # Name of the function
-    args:                   # Types of the arguments it must contain struct sk_buff
-    - struct sk_buff *skb
-
-  - name: ip_rcv
-    args:
-    - struct sk_buff *skb
-
-  - name: ip_local_out
-    args:
-    - struct net *net
-    - struct sock *sk
-    - struct sk_buff *skb
-
-  - name: ip_output
-    args:
-    - struct net *net
-    - struct sock *sk
-    - struct sk_buff *skb
 ```
