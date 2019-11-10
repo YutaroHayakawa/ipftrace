@@ -9,6 +9,7 @@ import click
 import socket
 import argparse
 import textwrap
+import tabulate
 import importlib
 import ipaddress
 import subprocess
@@ -57,13 +58,14 @@ class IPAddrs(Union):
 class EventData(Structure):
     _anonymous = "addrs"
     _fields_ = [
-        ("event_id", c_uint8),
+        ("tstamp", c_uint64),
+        ("faddr", c_uint64),
         ("l4_protocol", c_uint8),
         ("l3_protocol", c_uint16),
         ("addrs", IPAddrs),
         ("sport", c_uint16),
         ("dport", c_uint16),
-        ("data", c_uint8 * 32),
+        ("data", c_uint8 * 64),
     ]
 
 
@@ -79,14 +81,9 @@ class Flow:
 
 @dataclasses.dataclass(eq=True, frozen=True)
 class EventLog:
+    time_stamp: str
     event_name: str
     custom_data: str
-
-    def __repr__(self):
-        if self.custom_data == None:
-            return f"{self.event_name}"
-        else:
-            return f"{self.event_name}{self.custom_data}"
 
 
 class IPFTracer:
@@ -247,23 +244,31 @@ class IPFTracer:
 
             event_logs = flows.get(flow, [])
 
-            try:
-                custom_data = self.module.parse_data(event.data)
-            except Exception as e:
-                print(e)
-                # This catches the case self.module == None
+            if self.module != None:
+                try:
+                    custom_data = self.module.parse_data(event.data)
+                except Exception as e:
+                    custom_data = None
+            else:
                 custom_data = None
 
-            event_logs.append(EventLog(event_name, custom_data))
+            event_logs.append(EventLog(tstamp, fname, custom_data))
 
-            if event_name in self.egress_functions:
-                if len(event_logs) != 1:
-                    src = str(saddr) + (":" + str(sport) if sport != 0 else "")
-                    dst = str(daddr) + (":" + str(dport) if dport != 0 else "")
-                    print(f"{l4_proto}\t{src}\t->\t{dst}\n{event_logs}")
-                    del flows[flow]
-            else:
-                flows[flow] = event_logs
+            flows[flow] = event_logs
+
+            if fname in self.egress_functions:
+                src = str(saddr) + (":" + str(sport) if sport != 0 else "")
+                dst = str(daddr) + (":" + str(dport) if dport != 0 else "")
+                if self.module != None:
+                    header = ["Time Stamp", "Function", "Custom Data"]
+                    table = [ [e.time_stamp, e.event_name, e.custom_data] for e in event_logs ]
+                else:
+                    header = ["Time Stamp", "Function"]
+                    table = [ [e.time_stamp, e.event_name] for e in event_logs ]
+                print(f"{l4_proto}\t{src}\t->\t{dst}")
+                print(tabulate.tabulate(table, header, tablefmt="plain"))
+                print("")
+                del flows[flow]
 
         events.open_perf_buffer(handle_event, lost_cb=handle_lost, page_cnt=64)
 

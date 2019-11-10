@@ -16,7 +16,8 @@
   } while(0)
 
 struct event_data {
-  uint8_t event_id;
+  uint64_t tstamp;
+  uint64_t faddr;
   uint8_t l4_protocol;
   uint16_t l3_protocol;
   union {
