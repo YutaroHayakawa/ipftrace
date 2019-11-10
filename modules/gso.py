@@ -34,6 +34,7 @@ def parse_features(features):
 def gen_match():
     return """
     struct gso_data {
+      unsigned int len;
       unsigned short gso_size;
       unsigned short gso_segs;
       unsigned int gso_type;
@@ -48,6 +49,7 @@ def gen_match():
 
       member_read(&head, skb, head);
       member_read(&end, skb, end);
+      member_read(&gd->len, skb, len);
 
       shinfo = head + end;
 
@@ -62,6 +64,7 @@ def gen_match():
 
 class GSOData(Structure):
     _fields_ = [
+        ("len", c_uint),
         ("gso_size", c_ushort),
         ("gso_segs", c_ushort),
         ("gso_type", c_uint),
@@ -70,4 +73,4 @@ class GSOData(Structure):
 
 def parse_data(data):
     gd = cast(data, POINTER(GSOData)).contents
-    return f" (gso_size: {gd.gso_size} gso_segs: {gd.gso_segs} gso_type: {parse_features(gd.gso_type)})"
+    return f" (len: {gd.len} gso_size: {gd.gso_size} gso_segs: {gd.gso_segs} gso_type: {parse_features(gd.gso_type)})"
