@@ -71,7 +71,6 @@ class EventData(Structure):
 
 @dataclasses.dataclass(eq=True, frozen=True)
 class Flow:
-    l3_protocol: str
     l4_protocol: str
     saddr: str
     daddr: str
@@ -95,6 +94,7 @@ class IPFTracer:
         self.read_manifest()
         self.probes = self.build_probes()
         self.module = self.load_module()
+        self.flows = {}
 
     def read_manifest(self):
         with open(self.args["manifest_file"]) as f:
@@ -198,77 +198,77 @@ class IPFTracer:
             name = f["name"]
             print(f"{name}")
 
+    def parse_l3_proto(self, event):
+        if event.l3_protocol == 0x0008:  # IPv4
+            saddr = ipaddress.IPv4Address(socket.ntohl(event.addrs.v4.saddr))
+            daddr = ipaddress.IPv4Address(socket.ntohl(event.addrs.v4.daddr))
+        elif event.l3_protocol == 0xdd86:  # IPv6
+            saddr = ipaddress.IPv6Address(bytes(event.addrs.v6.saddr))
+            daddr = ipaddress.IPv6Address(bytes(event.addrs.v6.daddr))
+        else:
+            print(f"Unsupported l3 protocol {event.l3_protocol}")
+            exit(1)
+
+        return (str(saddr), str(daddr))
+
+    def parse_l4_proto(self, event):
+        l4_proto = ID_TO_L4_PROTO[str(event.l4_protocol)]
+        sport = str(socket.ntohs(event.sport))
+        dport = str(socket.ntohs(event.dport))
+        return (l4_proto, sport, dport)
+
+    def handle_lost(self, lost):
+        self.flows.clear()
+
+    def handle_event(self, cpu, data, size):
+        event = cast(data, POINTER(EventData)).contents
+
+        fname = BPF.ksym(event.faddr).decode("utf-8")
+        tstamp = str(event.tstamp)
+        saddr, daddr = self.parse_l3_proto(event)
+        l4_proto, sport, dport = self.parse_l4_proto(event)
+
+        flow = Flow(
+            l4_protocol=l4_proto,
+            saddr=saddr,
+            daddr=daddr,
+            sport=sport,
+            dport=dport,
+        )
+
+        event_logs = self.flows.get(flow, [])
+
+        if self.module != None:
+            try:
+                custom_data = self.module.parse_data(event.data)
+            except Exception as e:
+                custom_data = None
+        else:
+            custom_data = None
+
+        event_logs.append(EventLog(tstamp, fname, custom_data))
+
+        self.flows[flow] = event_logs
+
+        if fname in self.egress_functions:
+            src = saddr + (":" + sport if sport != "0" else "")
+            dst = daddr + (":" + dport if dport != "0" else "")
+            if self.module != None:
+                header = ["Time Stamp", "Function", "Custom Data"]
+                table = [ [e.time_stamp, e.event_name, e.custom_data] for e in event_logs ]
+            else:
+                header = ["Time Stamp", "Function"]
+                table = [ [e.time_stamp, e.event_name] for e in event_logs ]
+            print(f"{l4_proto}\t{src}\t->\t{dst}")
+            print(tabulate.tabulate(table, header, tablefmt="plain"))
+            print("")
+            del self.flows[flow]
+
     def run_tracing(self):
         b = self.attach_probes()
         events = b["events"]
 
-        flows = {}
-
-        #
-        # In case of the lost, we should reset the flows, because we may
-        # miss the egress events
-        #
-        def handle_lost(lost):
-            flows.clear()
-
-        def handle_event(cpu, data, size):
-            event = cast(data, POINTER(EventData)).contents
-            fname = BPF.ksym(event.faddr).decode("utf-8")
-            tstamp = str(event.tstamp)
-
-            if str(event.l3_protocol) == L3_PROTO_TO_ID["IPv4"]:
-                saddr = ipaddress.IPv4Address(socket.ntohl(event.addrs.v4.saddr))
-                daddr = ipaddress.IPv4Address(socket.ntohl(event.addrs.v4.daddr))
-            elif str(event.l3_protocol) == L3_PROTO_TO_ID["IPv6"]:
-                saddr = ipaddress.IPv6Address(bytes(event.addrs.v6.saddr))
-                daddr = ipaddress.IPv6Address(bytes(event.addrs.v6.daddr))
-            else:
-                print(f"Unsupported l3 protocol {event.l3_protocol}")
-                return
-
-            l3_proto = ID_TO_L3_PROTO[str(event.l3_protocol)]
-            l4_proto = ID_TO_L4_PROTO[str(event.l4_protocol)]
-            sport = socket.ntohs(event.sport)
-            dport = socket.ntohs(event.dport)
-
-            flow = Flow(
-                l3_protocol=l3_proto,
-                l4_protocol=l4_proto,
-                saddr=str(saddr),
-                daddr=str(daddr),
-                sport=sport,
-                dport=dport,
-            )
-
-            event_logs = flows.get(flow, [])
-
-            if self.module != None:
-                try:
-                    custom_data = self.module.parse_data(event.data)
-                except Exception as e:
-                    custom_data = None
-            else:
-                custom_data = None
-
-            event_logs.append(EventLog(tstamp, fname, custom_data))
-
-            flows[flow] = event_logs
-
-            if fname in self.egress_functions:
-                src = str(saddr) + (":" + str(sport) if sport != 0 else "")
-                dst = str(daddr) + (":" + str(dport) if dport != 0 else "")
-                if self.module != None:
-                    header = ["Time Stamp", "Function", "Custom Data"]
-                    table = [ [e.time_stamp, e.event_name, e.custom_data] for e in event_logs ]
-                else:
-                    header = ["Time Stamp", "Function"]
-                    table = [ [e.time_stamp, e.event_name] for e in event_logs ]
-                print(f"{l4_proto}\t{src}\t->\t{dst}")
-                print(tabulate.tabulate(table, header, tablefmt="plain"))
-                print("")
-                del flows[flow]
-
-        events.open_perf_buffer(handle_event, lost_cb=handle_lost, page_cnt=64)
+        events.open_perf_buffer(self.handle_event, lost_cb=self.handle_lost, page_cnt=64)
 
         print("Trace ready!")
         while 1:
@@ -276,6 +276,7 @@ class IPFTracer:
                 b.perf_buffer_poll()
             except KeyboardInterrupt:
                 exit(0)
+
 
 @click.command()
 @click.option("-iv", "--ipversion", default="any", type=click.Choice(["any", "4", "6"]), help="Specify IP version")
