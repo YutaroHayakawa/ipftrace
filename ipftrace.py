@@ -178,27 +178,25 @@ class IPFTracer:
         opts = self.build_opts()
         b = BPF(text=probes, cflags=opts)
 
-        for group, events in self.functions.items():
-            for e in events:
-                name = e["name"]
-                skb_pos = e["skb_pos"]
+        for f in self.functions:
+            name = f["name"]
+            skb_pos = f["skb_pos"]
 
-                if skb_pos > 4:
-                    print(f"Invalid skb_pos for function {name}. It should be lower than 4.")
-                    exit(1)
+            if skb_pos > 4:
+                print(f"Invalid skb_pos for function {name}. It should be lower than 4.")
+                exit(1)
 
-                b.attach_kprobe(event=name, fn_name=f"ipftrace_main{skb_pos}")
+            b.attach_kprobe(event=name, fn_name=f"ipftrace_main{skb_pos}")
 
-                if e.get("egress", False):
-                    self.egress_functions.append(name)
+            if f.get("egress", False):
+                self.egress_functions.append(name)
 
         return b
 
     def list_functions(self):
-        for g, l in self.functions.items():
-            print(g)
-            for e in l:
-                print(f"  {e['name']}")
+        for f in self.functions:
+            name = f["name"]
+            print(f"{name}")
 
     def run_tracing(self):
         b = self.attach_probes()
@@ -289,7 +287,7 @@ class IPFTracer:
 @click.option("-sp", "--sport", default="any", help="Specify source port number")
 @click.option("-dp", "--dport", default="any", help="Specify destination port number")
 @click.option("-m", "--module", default=None, help="Specify custom match module name")
-@click.option("-l", "--list", is_flag=True, help="List available groups and functions")
+@click.option("-l", "--list", is_flag=True, help="List available functions")
 @click.argument("manifest-file")
 def main(ipversion, l4proto, saddr4, daddr4, saddr6, daddr6, sport, dport, module, list, manifest_file):
     """
