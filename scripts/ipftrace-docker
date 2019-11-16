@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+IPFTRACE="yutarohayakawa/ipftrace:latest"
+
+function usage() {
+  echo "Usage: $0 <ipftrace arguments>"
+  echo "=== ipftrace usage ==="
+  docker run --rm $IPFTRACE --help
+  exit 1
+}
+
+if [ -z ${BASH_ARGC} ]; then
+  usage
+fi
+
+ARGS=(${@})
+MANIFEST=${ARGS[-1]}
+IPFTRACE_ARGS=${ARGS[@]:0:$((${BASH_ARGC} - 1))}
+
+if [ ! -f $MANIFEST ]; then
+  echo "$MANIFEST is not likely a manifest file"
+  usage
+fi
+
+if [ "${MANIFEST:0:1}" != "/" ]; then
+  MANIFEST=$(pwd)/$MANIFEST
+fi
+
+docker run --privileged --rm \
+  -v $MANIFEST:/manifest.yaml \
+  -v /sys/kernel/debug:/sys/kernel/debug \
+  -v /lib/modules:/lib/modules \
+  -v /usr/src:/usr/src \
+  $IPFTRACE \
+  $IPFTRACE_ARGS \
+  /manifest.yaml
