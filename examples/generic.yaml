@@ -1,5 +1,4 @@
 functions:
-  ipv4:
   - name: ip_rcv
     skb_pos: 1
 
@@ -36,7 +35,6 @@ functions:
   - name: ip_send_skb
     skb_pos: 2
 
-  ipv6:
   - name: ipv6_rcv
     skb_pos: 1
 
@@ -61,7 +59,6 @@ functions:
   - name: ip6_input_finish
     skb_pos: 3
 
-  lwt:
   - name: lwtunnel_input
     skb_pos: 1
 
@@ -71,35 +68,10 @@ functions:
   - name: lwtunnel_xmit
     skb_pos: 1
 
-  seg6:
-  - name: seg6_input
-    skb_pos: 1
-
-  - name: seg6_output
-    skb_pos: 3
-
-  ipip:
-  - name: ipip_rcv
-    skb_pos: 1
-
-  - name: ipip_tunnel_xmit
-    skb_pos: 1
-
-  ip_tunnel:
-  - name: ip_tunnel_rcv
-    skb_pos: 2
-
-  - name: ip_tunnel_xmit
-    skb_pos: 1
-
-  gso:
   - name: __skb_gso_segment
     skb_pos: 1
 
   - name: skb_mac_gso_segment
-    skb_pos: 1
-
-  - name: ipip_gso_segment
     skb_pos: 1
 
   - name: tcp_gso_segment
