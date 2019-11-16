@@ -186,7 +186,10 @@ class IPFTracer:
                 print(f"Invalid skb_pos for function {name}. It should be lower than 4.")
                 exit(1)
 
-            b.attach_kprobe(event=name, fn_name=f"ipftrace_main{skb_pos}")
+            try:
+                b.attach_kprobe(event=name, fn_name=f"ipftrace_main{skb_pos}")
+            except:
+                print(f"Couldn't attach kprobe to function {name}")
 
             if f.get("egress", False):
                 self.egress_functions.append(name)
