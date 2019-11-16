@@ -1,5 +1,6 @@
 FROM fedora:30
-RUN dnf install -y git vim python3 pipenv bcc bpftrace && dnf clean all
+RUN dnf install -y git vim iproute python3 pipenv bcc bpftrace && dnf clean all
 ADD ./ /ipftrace/
-RUN cd /ipftrace && pip3 install -r requirements.txt
-ENTRYPOINT ["/sbin/init"]
+ENV PYTHONUNBUFFERED=1
+RUN cd /ipftrace && pip3 install -e .
+ENTRYPOINT ["ipftrace"]

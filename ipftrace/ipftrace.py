@@ -158,7 +158,8 @@ class IPFTracer:
         return opts
 
     def build_probes(self):
-        ret = open("ipftrace.bpf.c").read()
+        bpf_src = os.path.join(os.path.dirname(__file__), "ipftrace.bpf.c")
+        ret = open(bpf_src).read()
 
         try:
             ret += self.module.gen_match()
