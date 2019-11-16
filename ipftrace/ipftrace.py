@@ -279,6 +279,7 @@ class IPFTracer:
             try:
                 b.perf_buffer_poll()
             except KeyboardInterrupt:
+                print("Got keyboard interrupt. Detaching probes...")
                 exit(0)
 
 
