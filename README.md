@@ -111,7 +111,7 @@ ICMP	10.128.218.64	->	10.231.244.75
 
 Trace the GSO behavior with custom module
 ```
-# ipftrace -l4 TCP -d4 10.231.206.32 -dp 8000 examples/5.4.0-rc7-btf.yaml
+# ipftrace -l4 TCP -d4 10.231.206.32 -dp 8000 -m gso examples/5.4.0-rc7-btf.yaml
 <...>
 TCP    10.231.244.75:33696    ->    10.231.206.32:8000
      Time Stamp  Function                      Custom Data
