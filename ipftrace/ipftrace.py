@@ -16,6 +16,7 @@ import subprocess
 import dataclasses
 from bcc import BPF
 from ctypes import *
+from ipftrace.modules import get_modules
 
 
 # Ethernet type name <=> Ethernet type mapping
@@ -103,7 +104,13 @@ class IPFTracer:
     def load_module(self):
         if self.args["module"] is None:
             return None
-        return importlib.import_module(self.args["module"])
+
+        modules = get_modules()
+        module = modules[self.args["module"]]
+
+        print("Loading module " + str(module))
+
+        return module()
 
     def build_l3_protocol_opt(self, protocol):
         if protocol == "any":
@@ -246,6 +253,7 @@ class IPFTracer:
             try:
                 custom_data = self.module.parse_data(event.data)
             except Exception as e:
+                print(e)
                 custom_data = None
         else:
             custom_data = None
