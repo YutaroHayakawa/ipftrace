@@ -28,7 +28,7 @@ Options:
 
 ## Examples
 
-Trace the ICMP packets with source IPv4 address 10.0.1.10
+Trace the ping ICMP packets
 ```
 # ipftrace -l4 ICMP examples/5.4.0-rc7-btf.yaml
 <...>
