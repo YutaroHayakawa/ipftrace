@@ -1,0 +1,1169 @@
+functions:
+  - name: bpf_internal_load_pointer_neg_helper
+    skb_pos: 1
+  - name: skb_copy_bits
+    skb_pos: 1
+  - name: dev_map_generic_redirect
+    skb_pos: 2
+  - name: security_skb_classify_flow
+    skb_pos: 1
+  - name: security_sock_rcv_skb
+    skb_pos: 2
+  - name: security_socket_getpeersec_dgram
+    skb_pos: 2
+  - name: security_inet_conn_request
+    skb_pos: 2
+  - name: security_inet_conn_established
+    skb_pos: 2
+  - name: security_sctp_assoc_request
+    skb_pos: 2
+  - name: security_netlink_send
+    skb_pos: 2
+  - name: security_xfrm_decode_session
+    skb_pos: 1
+  - name: selinux_xfrm_decode_session
+    skb_pos: 1
+  - name: selinux_xfrm_skb_sid
+    skb_pos: 1
+  - name: selinux_xfrm_sock_rcv_skb
+    skb_pos: 2
+  - name: selinux_xfrm_postroute_last
+    skb_pos: 2
+  - name: selinux_netlbl_err
+    skb_pos: 1
+  - name: selinux_netlbl_skbuff_getsid
+    skb_pos: 1
+  - name: selinux_netlbl_skbuff_setsid
+    skb_pos: 1
+  - name: selinux_netlbl_sctp_assoc_request
+    skb_pos: 2
+  - name: selinux_netlbl_sock_rcv_skb
+    skb_pos: 2
+  - name: ipv4_skb_to_auditdata
+    skb_pos: 1
+  - name: ipv6_skb_to_auditdata
+    skb_pos: 1
+  - name: __sock_recv_wifi_status
+    skb_pos: 3
+  - name: __sock_recv_timestamp
+    skb_pos: 3
+  - name: __sock_recv_ts_and_drops
+    skb_pos: 3
+  - name: skb_orphan_partial
+    skb_pos: 1
+  - name: __sk_backlog_rcv
+    skb_pos: 2
+  - name: skb_set_owner_w
+    skb_pos: 1
+  - name: sock_rfree
+    skb_pos: 1
+  - name: __sock_queue_rcv_skb
+    skb_pos: 2
+  - name: sock_queue_rcv_skb
+    skb_pos: 2
+  - name: __sk_receive_skb
+    skb_pos: 2
+  - name: sock_efree
+    skb_pos: 1
+  - name: sock_wfree
+    skb_pos: 1
+  - name: __sock_wfree
+    skb_pos: 1
+    egress: true
+  - name: sk_wait_data
+    skb_pos: 3
+  - name: skb_prepare_seq_read
+    skb_pos: 1
+  - name: skb_pull_rcsum
+    skb_pos: 1
+  - name: sock_queue_err_skb
+    skb_pos: 2
+  - name: skb_checksum
+    skb_pos: 1
+  - name: skb_partial_csum_set
+    skb_pos: 1
+  - name: __skb_warn_lro_forwarding
+    skb_pos: 1
+  - name: __kfree_skb
+    skb_pos: 1
+  - name: kfree_skb
+    skb_pos: 1
+    egress: true
+  - name: consume_skb
+    skb_pos: 1
+  - name: skb_tx_error
+    skb_pos: 1
+  - name: skb_ensure_writable
+    skb_pos: 1
+  - name: napi_consume_skb
+    skb_pos: 1
+  - name: kfree_skb_partial
+    skb_pos: 1
+  - name: skb_coalesce_rx_frag
+    skb_pos: 1
+  - name: skb_headers_offset_update
+    skb_pos: 1
+  - name: skb_gso_validate_mac_len
+    skb_pos: 1
+  - name: skb_store_bits
+    skb_pos: 1
+  - name: skb_unlink
+    skb_pos: 1
+  - name: skb_zerocopy_iter_dgram
+    skb_pos: 1
+  - name: skb_send_sock_locked
+    skb_pos: 2
+  - name: __skb_checksum
+    skb_pos: 1
+  - name: skb_copy_and_csum_bits
+    skb_pos: 1
+  - name: skb_copy_and_csum_dev
+    skb_pos: 1
+  - name: __skb_checksum_complete_head
+    skb_pos: 1
+  - name: __skb_checksum_complete
+    skb_pos: 1
+  - name: pskb_put
+    skb_pos: 1
+  - name: skb_pull
+    skb_pos: 1
+  - name: skb_find_text
+    skb_pos: 1
+  - name: skb_dump
+    skb_pos: 2
+  - name: skb_gso_validate_network_len
+    skb_pos: 1
+  - name: skb_trim
+    skb_pos: 1
+  - name: skb_add_rx_frag
+    skb_pos: 1
+  - name: skb_to_sgvec
+    skb_pos: 1
+    egress: true
+  - name: skb_to_sgvec_nomark
+    skb_pos: 1
+  - name: skb_append_pagefrags
+    skb_pos: 1
+  - name: skb_scrub_packet
+    skb_pos: 1
+  - name: skb_ext_add
+    skb_pos: 1
+  - name: __skb_ext_del
+    skb_pos: 1
+  - name: skb_copy
+    skb_pos: 1
+  - name: skb_copy_expand
+    skb_pos: 1
+  - name: build_skb_around
+    skb_pos: 1
+  - name: skb_splice_bits
+    skb_pos: 1
+  - name: skb_gro_receive
+    skb_pos: 2
+  - name: skb_release_head_state
+    skb_pos: 1
+  - name: skb_complete_tx_timestamp
+    skb_pos: 1
+  - name: skb_complete_wifi_ack
+    skb_pos: 1
+  - name: skb_copy_ubufs
+    skb_pos: 1
+  - name: skb_clone
+    skb_pos: 1
+  - name: skb_clone_sk
+    skb_pos: 1
+  - name: pskb_expand_head
+    skb_pos: 1
+  - name: __pskb_pull_tail
+    skb_pos: 1
+  - name: skb_checksum_setup
+    skb_pos: 1
+  - name: __skb_pad
+    skb_pos: 1
+  - name: skb_cow_data
+    skb_pos: 1
+  - name: __skb_vlan_pop
+    skb_pos: 1
+  - name: skb_vlan_pop
+    skb_pos: 1
+  - name: skb_mpls_pop
+    skb_pos: 1
+  - name: skb_mpls_update_lse
+    skb_pos: 1
+  - name: skb_mpls_dec_ttl
+    skb_pos: 1
+  - name: skb_mpls_push
+    skb_pos: 1
+  - name: skb_vlan_push
+    skb_pos: 1
+  - name: __pskb_copy_fclone
+    skb_pos: 1
+  - name: skb_realloc_headroom
+    skb_pos: 1
+  - name: skb_split
+    skb_pos: 1
+  - name: skb_vlan_untag
+    skb_pos: 1
+  - name: __consume_stateless_skb
+    skb_pos: 1
+  - name: __kfree_skb_defer
+    skb_pos: 1
+  - name: skb_shift
+    skb_pos: 2
+  - name: skb_condense
+    skb_pos: 1
+  - name: ___pskb_trim
+    skb_pos: 1
+  - name: skb_zerocopy_iter_stream
+    skb_pos: 2
+  - name: pskb_trim_rcsum_slow
+    skb_pos: 1
+  - name: skb_checksum_trimmed
+    skb_pos: 1
+  - name: pskb_extract
+    skb_pos: 1
+  - name: __skb_free_datagram_locked
+    skb_pos: 2
+  - name: __skb_wait_for_more_packets
+    skb_pos: 4
+  - name: __sk_queue_drop_skb
+    skb_pos: 3
+  - name: skb_copy_and_hash_datagram_iter
+    skb_pos: 1
+  - name: skb_copy_datagram_iter
+    skb_pos: 1
+  - name: skb_copy_datagram_from_iter
+    skb_pos: 1
+  - name: __zerocopy_sg_from_iter
+    skb_pos: 2
+  - name: zerocopy_sg_from_iter
+    skb_pos: 1
+  - name: skb_copy_and_csum_datagram_msg
+    skb_pos: 1
+  - name: skb_free_datagram
+    skb_pos: 2
+  - name: skb_kill_datagram
+    skb_pos: 2
+  - name: gnet_stats_start_copy_compat
+    skb_pos: 1
+  - name: gnet_stats_start_copy
+    skb_pos: 1
+  - name: skb_flow_dissect_ct
+    skb_pos: 1
+  - name: skb_flow_dissect_meta
+    skb_pos: 1
+  - name: skb_flow_dissect_tunnel_info
+    skb_pos: 1
+  - name: __skb_flow_get_ports
+    skb_pos: 1
+  - name: __skb_flow_dissect
+    skb_pos: 2
+  - name: __skb_get_hash_symmetric
+    skb_pos: 1
+  - name: __skb_get_hash
+    skb_pos: 1
+  - name: skb_get_hash_perturb
+    skb_pos: 1
+  - name: __skb_get_poff
+    skb_pos: 1
+  - name: skb_get_poff
+    skb_pos: 1
+  - name: is_skb_forwardable
+    skb_pos: 2
+  - name: netdev_rx_csum_fault
+    skb_pos: 2
+  - name: skb_csum_hwoffload_help
+    skb_pos: 1
+  - name: do_xdp_generic
+    skb_pos: 2
+  - name: passthru_features_check
+    skb_pos: 1
+  - name: dev_pick_tx_zero
+    skb_pos: 2
+  - name: dev_pick_tx_cpu_id
+    skb_pos: 2
+  - name: __skb_gro_checksum_complete
+    skb_pos: 1
+  - name: __dev_forward_skb
+    skb_pos: 2
+  - name: netdev_pick_tx
+    skb_pos: 2
+  - name: skb_checksum_help
+    skb_pos: 1
+  - name: dev_fill_metadata_dst
+    skb_pos: 2
+  - name: __dev_kfree_skb_irq
+    skb_pos: 1
+  - name: __dev_kfree_skb_any
+    skb_pos: 1
+  - name: dev_queue_xmit_nit
+    skb_pos: 1
+  - name: dev_forward_skb
+    skb_pos: 2
+  - name: netif_rx
+    skb_pos: 1
+  - name: netif_rx_ni
+    skb_pos: 1
+  - name: dev_loopback_xmit
+    skb_pos: 3
+  - name: skb_crc32c_csum_help
+    skb_pos: 1
+  - name: skb_network_protocol
+    skb_pos: 1
+  - name: skb_mac_gso_segment
+    skb_pos: 1
+  - name: __skb_gso_segment
+    skb_pos: 1
+  - name: netif_skb_features
+    skb_pos: 1
+  - name: validate_xmit_skb_list
+    skb_pos: 1
+  - name: dev_direct_xmit
+    skb_pos: 1
+  - name: netdev_core_pick_tx
+    skb_pos: 2
+  - name: dev_queue_xmit
+    skb_pos: 1
+  - name: dev_queue_xmit_accel
+    skb_pos: 1
+  - name: generic_xdp_tx
+    skb_pos: 1
+  - name: netif_receive_skb_core
+    skb_pos: 1
+  - name: netif_receive_skb
+    skb_pos: 1
+  - name: napi_gro_receive
+    skb_pos: 2
+  - name: dst_discard_out
+    skb_pos: 3
+  - name: neigh_resolve_output
+    skb_pos: 2
+  - name: neigh_direct_output
+    skb_pos: 2
+  - name: neigh_connected_output
+    skb_pos: 2
+  - name: pneigh_enqueue
+    skb_pos: 3
+  - name: __neigh_event_send
+    skb_pos: 2
+  - name: neigh_xmit
+    skb_pos: 4
+  - name: rtnl_notify
+    skb_pos: 1
+  - name: rtnl_unicast
+    skb_pos: 1
+  - name: rtmsg_ifinfo_send
+    skb_pos: 1
+  - name: rtnl_put_cacheinfo
+    skb_pos: 1
+  - name: ndo_dflt_fdb_dump
+    skb_pos: 1
+  - name: rtnetlink_put_metrics
+    skb_pos: 1
+  - name: ndo_dflt_bridge_getlink
+    skb_pos: 1
+  - name: rtnetlink_send
+    skb_pos: 1
+  - name: inet_proto_csum_replace4
+    skb_pos: 2
+  - name: inet_proto_csum_replace_by_diff
+    skb_pos: 2
+  - name: inet_proto_csum_replace16
+    skb_pos: 2
+  - name: bpf_csum_update
+    skb_pos: 1
+  - name: bpf_get_route_realm
+    skb_pos: 1
+  - name: bpf_set_hash_invalid
+    skb_pos: 1
+  - name: bpf_skb_get_pay_offset
+    skb_pos: 1
+  - name: bpf_skb_load_helper_8
+    skb_pos: 1
+  - name: bpf_skb_load_helper_8_no_cache
+    skb_pos: 1
+  - name: bpf_skb_load_helper_16
+    skb_pos: 1
+  - name: bpf_skb_load_helper_16_no_cache
+    skb_pos: 1
+  - name: bpf_skb_load_helper_32
+    skb_pos: 1
+  - name: bpf_skb_load_helper_32_no_cache
+    skb_pos: 1
+  - name: bpf_skb_get_xfrm_state
+    skb_pos: 1
+  - name: bpf_skb_get_tunnel_opt
+    skb_pos: 1
+  - name: bpf_get_cgroup_classid
+    skb_pos: 1
+  - name: bpf_get_hash_recalc
+    skb_pos: 1
+  - name: bpf_skb_event_output
+    skb_pos: 1
+  - name: bpf_get_socket_cookie
+    skb_pos: 1
+  - name: bpf_lwt_in_push_encap
+    skb_pos: 1
+  - name: bpf_skb_get_nlattr_nest
+    skb_pos: 1
+  - name: bpf_skb_ecn_set_ce
+    skb_pos: 1
+  - name: bpf_set_hash
+    skb_pos: 1
+  - name: bpf_sk_lookup_tcp
+    skb_pos: 1
+  - name: bpf_sk_lookup_udp
+    skb_pos: 1
+  - name: bpf_skc_lookup_tcp
+    skb_pos: 1
+  - name: bpf_skb_set_tunnel_key
+    skb_pos: 1
+  - name: sk_skb_pull_data
+    skb_pos: 1
+  - name: bpf_skb_load_bytes_relative
+    skb_pos: 1
+  - name: bpf_skb_get_nlattr
+    skb_pos: 1
+  - name: bpf_skb_change_type
+    skb_pos: 1
+  - name: bpf_lwt_xmit_push_encap
+    skb_pos: 1
+  - name: bpf_skb_load_bytes
+    skb_pos: 1
+  - name: bpf_skb_ancestor_cgroup_id
+    skb_pos: 1
+  - name: bpf_skb_cgroup_id
+    skb_pos: 1
+  - name: bpf_skb_under_cgroup
+    skb_pos: 1
+  - name: bpf_skb_change_head
+    skb_pos: 1
+  - name: bpf_skb_pull_data
+    skb_pos: 1
+  - name: bpf_skb_adjust_room
+    skb_pos: 1
+  - name: bpf_l3_csum_replace
+    skb_pos: 1
+  - name: bpf_l4_csum_replace
+    skb_pos: 1
+  - name: bpf_skb_store_bytes
+    skb_pos: 1
+  - name: bpf_skb_set_tunnel_opt
+    skb_pos: 1
+  - name: bpf_skb_get_tunnel_key
+    skb_pos: 1
+  - name: bpf_skb_vlan_push
+    skb_pos: 1
+  - name: bpf_skb_change_proto
+    skb_pos: 1
+  - name: bpf_skb_vlan_pop
+    skb_pos: 1
+  - name: sk_skb_change_head
+    skb_pos: 1
+  - name: xdp_do_generic_redirect
+    skb_pos: 2
+  - name: sk_skb_change_tail
+    skb_pos: 1
+  - name: bpf_skb_change_tail
+    skb_pos: 1
+  - name: bpf_get_socket_uid
+    skb_pos: 1
+  - name: bpf_skb_fib_lookup
+    skb_pos: 1
+  - name: bpf_clone_redirect
+    skb_pos: 1
+  - name: sk_filter_trim_cap
+    skb_pos: 2
+  - name: skb_do_redirect
+    skb_pos: 1
+  - name: bpf_run_sk_reuseport
+    skb_pos: 4
+  - name: sock_diag_put_filterinfo
+    skb_pos: 3
+  - name: sock_diag_put_meminfo
+    skb_pos: 2
+  - name: tso_build_data
+    skb_pos: 1
+  - name: tso_count_descs
+    skb_pos: 1
+  - name: tso_build_hdr
+    skb_pos: 1
+  - name: tso_start
+    skb_pos: 1
+  - name: reuseport_select_sock
+    skb_pos: 3
+  - name: netpoll_send_skb_on_dev
+    skb_pos: 2
+  - name: fib_nl_delrule
+    skb_pos: 1
+  - name: fib_nl_newrule
+    skb_pos: 1
+  - name: net_dm_hw_report
+    skb_pos: 1
+  - name: skb_clone_tx_timestamp
+    skb_pos: 1
+  - name: skb_defer_rx_timestamp
+    skb_pos: 1
+  - name: ptp_classify_raw
+    skb_pos: 1
+  - name: lwtunnel_fill_encap
+    skb_pos: 1
+  - name: lwtunnel_xmit
+    skb_pos: 1
+  - name: lwtunnel_input
+    skb_pos: 1
+  - name: lwtunnel_output
+    skb_pos: 3
+  - name: bpf_lwt_push_ip_encap
+    skb_pos: 1
+  - name: devlink_trap_report
+    skb_pos: 2
+  - name: devlink_dpipe_action_put
+    skb_pos: 1
+  - name: devlink_dpipe_match_put
+    skb_pos: 1
+  - name: gro_cells_receive
+    skb_pos: 2
+  - name: eth_header_parse_protocol
+    skb_pos: 1
+  - name: eth_header_parse
+    skb_pos: 1
+  - name: eth_header
+    skb_pos: 1
+  - name: eth_gro_receive
+    skb_pos: 2
+  - name: eth_type_trans
+    skb_pos: 1
+  - name: eth_gro_complete
+    skb_pos: 1
+  - name: sch_direct_xmit
+    skb_pos: 1
+  - name: __qdisc_calculate_pkt_len
+    skb_pos: 1
+  - name: tcf_classify
+    skb_pos: 1
+  - name: tcf_exts_dump_stats
+    skb_pos: 1
+  - name: tcf_exts_dump
+    skb_pos: 1
+  - name: tcf_action_exec
+    skb_pos: 1
+  - name: tcf_action_dump_old
+    skb_pos: 1
+  - name: tcf_action_copy_stats
+    skb_pos: 1
+  - name: tcf_action_dump_1
+    skb_pos: 1
+  - name: tcf_generic_walker
+    skb_pos: 2
+  - name: tcf_action_dump
+    skb_pos: 1
+  - name: __tcf_em_tree_match
+    skb_pos: 1
+  - name: tcf_em_tree_dump
+    skb_pos: 1
+  - name: netlink_ns_capable
+    skb_pos: 1
+  - name: netlink_broadcast
+    skb_pos: 2
+  - name: netlink_sendskb
+    skb_pos: 2
+  - name: netlink_strict_get_check
+    skb_pos: 1
+  - name: netlink_capable
+    skb_pos: 1
+  - name: netlink_net_capable
+    skb_pos: 1
+  - name: __nlmsg_put
+    skb_pos: 1
+  - name: netlink_broadcast_filtered
+    skb_pos: 2
+  - name: __netlink_dump_start
+    skb_pos: 2
+  - name: netlink_attachskb
+    skb_pos: 2
+  - name: netlink_unicast
+    skb_pos: 2
+  - name: netlink_rcv_skb
+    skb_pos: 1
+  - name: nlmsg_notify
+    skb_pos: 2
+  - name: netlink_detachskb
+    skb_pos: 2
+  - name: genlmsg_put
+    skb_pos: 1
+  - name: genlmsg_multicast_allns
+    skb_pos: 2
+  - name: genl_notify
+    skb_pos: 2
+  - name: nf_ct_attach
+    skb_pos: 2
+  - name: nf_ct_get_tuple_skb
+    skb_pos: 2
+  - name: nf_hook_slow
+    skb_pos: 1
+  - name: nf_log_packet
+    skb_pos: 4
+  - name: nf_log_trace
+    skb_pos: 4
+  - name: nf_queue
+    skb_pos: 1
+  - name: nf_ip_checksum
+    skb_pos: 1
+  - name: nf_ip6_checksum
+    skb_pos: 1
+  - name: nf_checksum
+    skb_pos: 1
+  - name: nf_checksum_partial
+    skb_pos: 1
+  - name: nf_reroute
+    skb_pos: 1
+  - name: ip_route_input_rcu
+    skb_pos: 1
+  - name: ip_rt_send_redirect
+    skb_pos: 1
+  - name: ip_rt_get_source
+    skb_pos: 2
+  - name: ip_mc_validate_source
+    skb_pos: 1
+  - name: fib_multipath_hash
+    skb_pos: 3
+  - name: ip_route_input_noref
+    skb_pos: 1
+  - name: ip_route_output_key_hash_rcu
+    skb_pos: 4
+  - name: ip_route_output_key_hash
+    skb_pos: 3
+  - name: ipv4_update_pmtu
+    skb_pos: 1
+  - name: ipv4_redirect
+    skb_pos: 1
+  - name: ipv4_sk_redirect
+    skb_pos: 1
+  - name: ipv4_sk_update_pmtu
+    skb_pos: 1
+  - name: fib_dump_info_fnhe
+    skb_pos: 1
+  - name: ip_call_ra_chain
+    skb_pos: 1
+  - name: ip_protocol_deliver_rcu
+    skb_pos: 2
+  - name: ip_local_deliver
+    skb_pos: 1
+  - name: ip_rcv
+    skb_pos: 1
+  - name: ip_check_defrag
+    skb_pos: 2
+  - name: ip_defrag
+    skb_pos: 2
+  - name: ip_forward
+    skb_pos: 1
+  - name: __ip_options_compile
+    skb_pos: 3
+  - name: ip_options_compile
+    skb_pos: 3
+  - name: ip_options_rcv_srr
+    skb_pos: 1
+  - name: ip_options_build
+    skb_pos: 1
+  - name: __ip_options_echo
+    skb_pos: 3
+  - name: ip_options_fragment
+    skb_pos: 1
+  - name: ip_forward_options
+    skb_pos: 1
+  - name: ip_frag_init
+    skb_pos: 1
+  - name: ip_frag_next
+    skb_pos: 1
+  - name: ip_fraglist_prepare
+    skb_pos: 1
+  - name: ip_fraglist_init
+    skb_pos: 1
+  - name: ip_do_fragment
+    skb_pos: 3
+  - name: __ip_local_out
+    skb_pos: 3
+  - name: ip_local_out
+    skb_pos: 3
+  - name: ip_build_and_send_pkt
+    skb_pos: 1
+  - name: __ip_queue_xmit
+    skb_pos: 2
+  - name: ip_mc_output
+    skb_pos: 3
+  - name: ip_output
+    skb_pos: 3
+  - name: ip_send_skb
+    skb_pos: 2
+  - name: ip_send_unicast_reply
+    skb_pos: 2
+  - name: ip_cmsg_recv_offset
+    skb_pos: 3
+  - name: ip_icmp_error
+    skb_pos: 2
+  - name: ipv4_pktinfo_prepare
+    skb_pos: 2
+  - name: sock_edemux
+    skb_pos: 1
+  - name: __inet_lookup_listener
+    skb_pos: 3
+  - name: tcp_md5_hash_skb_data
+    skb_pos: 2
+  - name: tcp_parse_options
+    skb_pos: 2
+  - name: tcp_conn_request
+    skb_pos: 4
+  - name: tcp_skb_mark_lost_uncond_verify
+    skb_pos: 2
+  - name: tcp_oow_rate_limited
+    skb_pos: 2
+  - name: tcp_rbtree_insert
+    skb_pos: 2
+  - name: tcp_rcv_established
+    skb_pos: 2
+  - name: tcp_finish_connect
+    skb_pos: 2
+  - name: tcp_rcv_state_process
+    skb_pos: 2
+  - name: tcp_skb_collapse_tstamp
+    skb_pos: 1
+  - name: tcp_wfree
+    skb_pos: 1
+  - name: tcp_fragment
+    skb_pos: 3
+  - name: tcp_trim_head
+    skb_pos: 2
+  - name: __tcp_retransmit_skb
+    skb_pos: 2
+  - name: tcp_retransmit_skb
+    skb_pos: 2
+  - name: tcp_v4_conn_request
+    skb_pos: 2
+  - name: tcp_filter
+    skb_pos: 2
+  - name: tcp_v4_md5_hash_skb
+    skb_pos: 4
+  - name: inet_sk_rx_dst_set
+    skb_pos: 2
+  - name: tcp_add_backlog
+    skb_pos: 2
+  - name: tcp_v4_syn_recv_sock
+    skb_pos: 2
+  - name: tcp_v4_do_rcv
+    skb_pos: 2
+  - name: __tcp_v4_send_check
+    skb_pos: 1
+  - name: tcp_v4_send_check
+    skb_pos: 2
+  - name: tcp_v4_early_demux
+    skb_pos: 1
+  - name: tcp_v4_rcv
+    skb_pos: 1
+  - name: tcp_create_openreq_child
+    skb_pos: 3
+  - name: tcp_child_process
+    skb_pos: 3
+  - name: tcp_check_req
+    skb_pos: 2
+  - name: tcp_timewait_state_process
+    skb_pos: 2
+  - name: tcp_fastopen_add_skb
+    skb_pos: 2
+  - name: tcp_try_fastopen
+    skb_pos: 2
+  - name: tcp_rate_skb_sent
+    skb_pos: 2
+  - name: tcp_rate_skb_delivered
+    skb_pos: 2
+  - name: tcp_rack_skb_timeout
+    skb_pos: 2
+  - name: tcp_mark_skb_lost
+    skb_pos: 2
+  - name: tcp_gro_complete
+    skb_pos: 1
+  - name: tcp4_gro_complete
+    skb_pos: 1
+  - name: tcp_gso_segment
+    skb_pos: 1
+  - name: tcp_gro_receive
+    skb_pos: 2
+  - name: tcp4_gro_receive
+    skb_pos: 2
+  - name: raw_icmp_error
+    skb_pos: 1
+  - name: raw_rcv
+    skb_pos: 2
+  - name: raw_local_deliver
+    skb_pos: 1
+  - name: skb_consume_udp
+    skb_pos: 2
+  - name: udp4_hwcsum
+    skb_pos: 1
+  - name: udp_set_csum
+    skb_pos: 2
+  - name: udp_skb_destructor
+    skb_pos: 2
+  - name: __udp_enqueue_schedule_skb
+    skb_pos: 2
+  - name: udp4_lib_lookup_skb
+    skb_pos: 1
+  - name: __udp4_lib_err
+    skb_pos: 1
+  - name: udp_err
+    skb_pos: 1
+  - name: __udp4_lib_rcv
+    skb_pos: 1
+  - name: udp_v4_early_demux
+    skb_pos: 1
+  - name: udp_rcv
+    skb_pos: 1
+  - name: udp_gro_complete
+    skb_pos: 1
+  - name: udp4_gro_complete
+    skb_pos: 1
+  - name: udp_gro_receive
+    skb_pos: 2
+  - name: udp4_gro_receive
+    skb_pos: 2
+  - name: skb_udp_tunnel_segment
+    skb_pos: 1
+  - name: arp_xmit
+    skb_pos: 1
+  - name: icmp_rcv
+    skb_pos: 1
+  - name: icmp_err
+    skb_pos: 1
+  - name: inet_gro_complete
+    skb_pos: 1
+  - name: inet_gro_receive
+    skb_pos: 2
+  - name: inet_gso_segment
+    skb_pos: 1
+  - name: ip_mc_check_igmp
+    skb_pos: 1
+  - name: igmp_rcv
+    skb_pos: 1
+  - name: fib_compute_spec_dst
+    skb_pos: 1
+  - name: fib_validate_source
+    skb_pos: 1
+  - name: fib_nexthop_info
+    skb_pos: 1
+  - name: fib_add_nexthop
+    skb_pos: 1
+  - name: fib_dump_info
+    skb_pos: 1
+  - name: fib_select_path
+    skb_pos: 4
+  - name: fib_table_dump
+    skb_pos: 2
+  - name: inet_frag_reasm_prepare
+    skb_pos: 2
+  - name: inet_frag_queue_insert
+    skb_pos: 2
+  - name: ping_queue_rcv_skb
+    skb_pos: 2
+  - name: ping_err
+    skb_pos: 1
+  - name: ping_rcv
+    skb_pos: 1
+  - name: iptunnel_handle_offloads
+    skb_pos: 1
+  - name: iptunnel_xmit
+    skb_pos: 3
+  - name: __iptunnel_pull_header
+    skb_pos: 1
+  - name: ip_mr_input
+    skb_pos: 1
+  - name: pim_rcv_v1
+    skb_pos: 1
+  - name: ipmr_get_route
+    skb_pos: 2
+  - name: mr_table_dump
+    skb_pos: 2
+  - name: mr_rtm_dumproute
+    skb_pos: 1
+  - name: mr_fill_mroute
+    skb_pos: 2
+  - name: tcp_get_cookie_sock
+    skb_pos: 2
+  - name: cookie_v4_init_sequence
+    skb_pos: 1
+  - name: cookie_v4_check
+    skb_pos: 2
+  - name: ip_route_me_harder
+    skb_pos: 2
+  - name: cipso_v4_optptr
+    skb_pos: 1
+  - name: cipso_v4_validate
+    skb_pos: 1
+  - name: cipso_v4_error
+    skb_pos: 1
+  - name: cipso_v4_skbuff_setattr
+    skb_pos: 1
+  - name: cipso_v4_skbuff_delattr
+    skb_pos: 1
+  - name: xfrm4_extract_header
+    skb_pos: 1
+  - name: xfrm4_rcv
+    skb_pos: 1
+  - name: xfrm4_extract_input
+    skb_pos: 2
+  - name: xfrm4_transport_finish
+    skb_pos: 1
+  - name: xfrm4_udp_encap_rcv
+    skb_pos: 2
+  - name: xfrm4_extract_output
+    skb_pos: 2
+  - name: xfrm4_output_finish
+    skb_pos: 2
+  - name: xfrm4_output
+    skb_pos: 3
+  - name: xfrm4_local_error
+    skb_pos: 1
+  - name: xfrm4_rcv_encap
+    skb_pos: 1
+  - name: __xfrm_decode_session
+    skb_pos: 1
+  - name: __xfrm_route_forward
+    skb_pos: 1
+  - name: __xfrm_policy_check
+    skb_pos: 3
+  - name: xfrm_audit_state_notfound_simple
+    skb_pos: 1
+  - name: xfrm_audit_state_notfound
+    skb_pos: 1
+  - name: xfrm_audit_state_replay_overflow
+    skb_pos: 2
+  - name: xfrm_audit_state_replay
+    skb_pos: 2
+  - name: xfrm_audit_state_icvfail
+    skb_pos: 2
+  - name: xfrm_parse_spi
+    skb_pos: 1
+  - name: secpath_set
+    skb_pos: 1
+  - name: xfrm_trans_queue
+    skb_pos: 1
+  - name: xfrm_input
+    skb_pos: 1
+  - name: xfrm_input_resume
+    skb_pos: 1
+  - name: xfrm_local_error
+    skb_pos: 1
+  - name: pktgen_xfrm_outer_mode_output
+    skb_pos: 2
+  - name: xfrm_output_resume
+    skb_pos: 1
+  - name: xfrm_output
+    skb_pos: 2
+  - name: unix_attach_fds
+    skb_pos: 2
+  - name: unix_detach_fds
+    skb_pos: 2
+  - name: unix_destruct_scm
+    skb_pos: 1
+  - name: ipv6_opt_accepted
+    skb_pos: 2
+  - name: ip6_frag_init
+    skb_pos: 1
+  - name: ip6_fraglist_init
+    skb_pos: 1
+  - name: ip6_fraglist_prepare
+    skb_pos: 1
+  - name: ip6_frag_next
+    skb_pos: 1
+  - name: ip6_xmit
+    skb_pos: 2
+  - name: ip6_forward
+    skb_pos: 1
+  - name: ip6_fragment
+    skb_pos: 3
+  - name: ip6_output
+    skb_pos: 3
+  - name: ip6_send_skb
+    skb_pos: 1
+  - name: ip6_rcv_finish
+    skb_pos: 3
+  - name: ipv6_rcv
+    skb_pos: 1
+  - name: ip6_protocol_deliver_rcu
+    skb_pos: 2
+  - name: ip6_input
+    skb_pos: 1
+  - name: ip6_mc_input
+    skb_pos: 1
+  - name: addrconf_dad_failure
+    skb_pos: 1
+  - name: ip6_route_lookup
+    skb_pos: 3
+  - name: ip6_route_input_lookup
+    skb_pos: 4
+  - name: ip6_update_pmtu
+    skb_pos: 1
+  - name: ip6_sk_update_pmtu
+    skb_pos: 1
+  - name: ip6_redirect
+    skb_pos: 1
+  - name: ip6_sk_redirect
+    skb_pos: 1
+  - name: ip6_neigh_lookup
+    skb_pos: 3
+  - name: rt6_multipath_hash
+    skb_pos: 3
+  - name: ip6_route_input
+    skb_pos: 1
+  - name: ip6_redirect_no_header
+    skb_pos: 1
+  - name: __ndisc_fill_addr_option
+    skb_pos: 1
+  - name: ndisc_send_redirect
+    skb_pos: 1
+  - name: ndisc_rcv
+    skb_pos: 1
+  - name: udp6_lib_lookup_skb
+    skb_pos: 1
+  - name: udp_v6_early_demux
+    skb_pos: 1
+  - name: __udp6_lib_err
+    skb_pos: 1
+  - name: __udp6_lib_rcv
+    skb_pos: 1
+  - name: udpv6_rcv
+    skb_pos: 1
+  - name: raw6_icmp_error
+    skb_pos: 1
+  - name: rawv6_rcv
+    skb_pos: 2
+  - name: raw6_local_deliver
+    skb_pos: 1
+  - name: ip6_err_gen_icmpv6_unreach
+    skb_pos: 1
+  - name: icmpv6_param_prob
+    skb_pos: 1
+  - name: icmpv6_notify
+    skb_pos: 1
+  - name: igmp6_event_query
+    skb_pos: 1
+  - name: igmp6_event_report
+    skb_pos: 1
+  - name: tcp_v6_early_demux
+    skb_pos: 1
+  - name: tcp_v6_rcv
+    skb_pos: 1
+  - name: ipv6_push_frag_opts
+    skb_pos: 1
+  - name: ipv6_parse_hopopts
+    skb_pos: 1
+  - name: ipv6_push_nfrag_opts
+    skb_pos: 1
+  - name: ipv6_icmp_error
+    skb_pos: 2
+  - name: ip6_datagram_recv_common_ctl
+    skb_pos: 3
+  - name: ip6_datagram_recv_specific_ctl
+    skb_pos: 3
+  - name: ip6_datagram_recv_ctl
+    skb_pos: 3
+  - name: inet6_csk_xmit
+    skb_pos: 2
+  - name: udp6_gro_complete
+    skb_pos: 1
+  - name: udp6_gro_receive
+    skb_pos: 2
+  - name: mroute6_is_socket
+    skb_pos: 2
+  - name: ip6_mr_input
+    skb_pos: 1
+  - name: ip6mr_get_route
+    skb_pos: 2
+  - name: xfrm6_extract_header
+    skb_pos: 1
+  - name: xfrm6_rcv_spi
+    skb_pos: 1
+  - name: xfrm6_rcv_tnl
+    skb_pos: 1
+  - name: xfrm6_rcv
+    skb_pos: 1
+  - name: xfrm6_input_addr
+    skb_pos: 1
+  - name: xfrm6_extract_input
+    skb_pos: 2
+  - name: xfrm6_transport_finish
+    skb_pos: 1
+  - name: xfrm6_find_1stfragopt
+    skb_pos: 2
+  - name: xfrm6_local_error
+    skb_pos: 1
+  - name: xfrm6_extract_output
+    skb_pos: 2
+  - name: xfrm6_output_finish
+    skb_pos: 2
+  - name: xfrm6_output
+    skb_pos: 3
+  - name: br_ip6_fragment
+    skb_pos: 3
+  - name: ip6_route_me_harder
+    skb_pos: 2
+  - name: fib6_rule_lookup
+    skb_pos: 3
+  - name: cookie_v6_init_sequence
+    skb_pos: 1
+  - name: cookie_v6_check
+    skb_pos: 2
+  - name: calipso_validate
+    skb_pos: 1
+  - name: ipv6_find_tlv
+    skb_pos: 1
+  - name: ipv6_skip_exthdr
+    skb_pos: 1
+  - name: ipv6_find_hdr
+    skb_pos: 1
+  - name: udp6_set_csum
+    skb_pos: 2
+  - name: udp6_csum_init
+    skb_pos: 1
+  - name: icmpv6_send
+    skb_pos: 1
+  - name: ip6_find_1stfragopt
+    skb_pos: 1
+  - name: ipv6_proxy_select_ident
+    skb_pos: 2
+  - name: __ip6_local_out
+    skb_pos: 3
+  - name: ip6_local_out
+    skb_pos: 3
+  - name: ipv6_gro_complete
+    skb_pos: 1
+  - name: ipv6_gro_receive
+    skb_pos: 2
+  - name: tcp6_gro_complete
+    skb_pos: 1
+  - name: tcp6_gro_receive
+    skb_pos: 2
+  - name: inet6_lookup_listener
+    skb_pos: 3
+  - name: inet6_lookup
+    skb_pos: 3
+  - name: ipv6_mc_check_mld
+    skb_pos: 1
+  - name: ipv6_mc_check_icmpv6
+    skb_pos: 1
+  - name: netlbl_skbuff_setattr
+    skb_pos: 1
+  - name: netlbl_skbuff_getattr
+    skb_pos: 1
+  - name: netlbl_skbuff_err
+    skb_pos: 1
+  - name: netlbl_cache_add
+    skb_pos: 1
+  - name: netlbl_unlabel_getattr
+    skb_pos: 1
+  - name: calipso_optptr
+    skb_pos: 1
+  - name: calipso_skbuff_setattr
+    skb_pos: 1
+  - name: calipso_skbuff_delattr
+    skb_pos: 1
+
