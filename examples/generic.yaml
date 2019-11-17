@@ -87,7 +87,6 @@ functions:
     skb_pos: 1
     egress: true
 
-  misc:
   - name: kfree_skb
     skb_pos: 1
     egress: true
