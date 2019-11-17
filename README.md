@@ -1,9 +1,38 @@
-# What is this and what is this for?
-ipftrace is a tool which tracks the functions that the packets have gone through inside the Linux kernel. It is inspired by ftrace, but the primary difference between ftrace is that it supports the flow based trace filtering. Function tracing which is not aware of the flow is usually useless for observing the behavior of the networking code because we usually want to know which flow have gone through the functions.
+# ipftrace
 
-## Dependencies
+## TL;DR
+ipftrace is a simple function tracer for Linux networking code with flow based filtering. It is similar to the ftrace in some sense but, you can trace **which flow have gone through which functions** inside the kernel which is usually more important information for the network people than **which functions are called** information provided by ftrace.
+
+## Install
+
+### Dependencies
 - Python3.7 or above
 - [BCC](https://github.com/iovisor/bcc)
+
+### Docker image
+
+#### Install
+```
+# docker pull yutarohayakawa/ipftrace:latest
+```
+
+#### Run
+We have useful wrapper script for docker run since it requires a lot of arguments (like expose the Linux source to the container, make container privileged and so on). It assumes the kernel source is placed under the /usr/src and symlinked from the files under /lib/modules. You don't have to upload the manifest file to the container. This sctipt will do it for you.
+```
+# ./scripts/ipftrace-docker -l4 ICMP manifest_on_the_host.yaml
+```
+
+### Install to your system
+
+#### Install
+```
+# pip3 install .
+```
+
+#### Run
+```
+# ipftrace -l4 ICMP manifest.yaml
+```
 
 ## Usage
 
@@ -53,13 +82,6 @@ ICMP	10.231.244.75	->	10.128.218.64
 
 ICMP	10.128.218.64	->	10.231.244.75
      Time Stamp  Function
-495406113277061  skb_copy_datagram_iter
-495406113320933  __sock_recv_ts_and_drops
-495406113354230  __sock_recv_timestamp
-495406113373470  skb_free_datagram
-495406113393790  consume_skb
-495406113408876  skb_release_head_state
-495406113426471  sock_rfree
 495406112568847  inet_gro_receive
 495406112662367  skb_defer_rx_timestamp
 495406112712251  consume_skb
@@ -116,3 +138,52 @@ TCP    10.231.244.75:33696    ->    10.231.206.32:8000
 490440712759857  skb_release_head_state        (len: 2115 gso_size: 1448 gso_segs: 2 gso_type: SKB_GSO_TCPV4)
 490440712772181  dev_queue_xmit_nit            (len: 1514 gso_size: 0 gso_segs: 0 gso_type: )
 ```
+
+## Manifest file
+ipftrace needs the YAML file called **manifest file**. Which seems like below.
+
+```YAML
+functions:
+  - name: ip_rcv
+    skb_pos: 1
+
+  - name: ip_local_out
+    skb_pos: 3
+
+  - name: ip_output
+    skb_pos: 3
+
+  - name: ip_local_deliver_finish
+    skb_pos: 3
+    egress: true
+
+  - name: ip_forward
+    skb_pos: 1
+
+  - name: ip_route_input_noref
+    skb_pos: 1
+
+<...>
+```
+
+It contains following informtations.
+
+- `name` : The symbol name of the function to trace
+- `skb_pos` : The position of the struct sk_buff* in the function arguments
+- `egress` : (optional) Indicates the end of the function chain
+
+As for the `name`, you can specify any kernel functions which takes struct sk_buff* as an argument (the symbol must be exported). In addition to the function name, we need `skb_pos` which indicates the position of the struct sk_buff* in the argument list of the function (the first argument is position 1).
+
+`egress` indicates the end of the function tracing. The list of the functions for the flow will be terminated and displayed when the packet reaches to the function annotated with `egress: true`. You need to find appropriate egress function to get correct result from ipftrace. This is probably a most difficult part of the ipftrace.
+
+As for today, you need to write the manifest file by your self. But the grows of the BTF (BPF Type Format) infrastructure will greatly reduce the time to write it (but you still need to find the egress function). Currently we have an example manifest in the `examples`. Feel free to use it.
+
+We also have useful experimental script to generate the manifest from BTF information in vmlinux. Please checkout `scripts/btf_to_manifest.py`. 
+
+## How it works?
+It uses eBPF + kprobe for attaching the tracing programs to the kernel, parse the packet in the kprobe, filter out the unneccesary packets and output some log through perf. That's it. 
+
+## Limitation and Tips
+- ipftrace cannot trace the function with skb_pos > 4 due to the limitation of the eBPF.
+- We recommend you to mark `kfree_skb` with `egress: true` this will catch the case which netfilter drops the packet.
+- ipftrace depends on the skb->network_header and skb->protocol to determine the IP address of the packet. So, if these informations are invalid, it cannot trace the function correctly. Due to this, ipftrace usually cannot trace the functions belongs to the "higher" layer than IP for TX path and "lower" layer than IP for RX path.
