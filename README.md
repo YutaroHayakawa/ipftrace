@@ -3,6 +3,27 @@
 ## TL;DR
 ipftrace is a simple function tracer for Linux networking code with flow based filtering. It is similar to the ftrace in some sense but, you can trace **which flow have gone through which functions** inside the kernel which is usually more important information for the network people than **which functions are called** information provided by ftrace.
 
+## Usage
+
+```
+Usage: ipftrace [OPTIONS] MANIFEST_FILE
+
+  Function tracer for Linux networking code with flow based filtering
+
+Options:
+  -iv, --ipversion [any|4|6]  Specify IP version
+  -l4, --l4proto TEXT         Specify L4 protocol
+  -s4, --saddr4 TEXT          Specify IPv4 source address
+  -d4, --daddr4 TEXT          Specify IPv4 destination address
+  -s6, --saddr6 TEXT          Specify IPv6 source address
+  -d6, --daddr6 TEXT          Specify IPv6 destination address
+  -sp, --sport TEXT           Specify source port number
+  -dp, --dport TEXT           Specify destination port number
+  -m, --module TEXT           Specify custom match module name
+  -l, --list                  List available functions
+  --help                      Show this message and exit.
+```
+
 ## Install
 
 ### Dependencies
@@ -32,27 +53,6 @@ We have useful wrapper script for `docker run` since it requires a lot of argume
 #### Run
 ```
 # ipftrace -l4 ICMP manifest.yaml
-```
-
-## Usage
-
-```
-Usage: ipftrace [OPTIONS] MANIFEST_FILE
-
-  Function tracer for Linux networking code with flow based filtering
-
-Options:
-  -iv, --ipversion [any|4|6]  Specify IP version
-  -l4, --l4proto TEXT         Specify L4 protocol
-  -s4, --saddr4 TEXT          Specify IPv4 source address
-  -d4, --daddr4 TEXT          Specify IPv4 destination address
-  -s6, --saddr6 TEXT          Specify IPv6 source address
-  -d6, --daddr6 TEXT          Specify IPv6 destination address
-  -sp, --sport TEXT           Specify source port number
-  -dp, --dport TEXT           Specify destination port number
-  -m, --module TEXT           Specify custom match module name
-  -l, --list                  List available functions
-  --help                      Show this message and exit.
 ```
 
 ## Examples
