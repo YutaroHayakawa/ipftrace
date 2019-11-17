@@ -6,6 +6,10 @@
 #include <uapi/linux/ipv6.h>
 #include <uapi/linux/ptrace.h>
 
+/*
+ * Bowrrowed the idea from tracepkt
+ * https://github.com/yadutaf/tracepkt
+ */
 #define member_read(_dst, _src, _member)                 \
   do{                                                    \
     bpf_probe_read(                                      \
