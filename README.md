@@ -17,7 +17,7 @@ ipftrace is a simple function tracer for Linux networking code with flow based f
 ```
 
 #### Run
-We have useful wrapper script for docker run since it requires a lot of arguments (like expose the Linux source to the container, make container privileged and so on). It assumes the kernel source is placed under the /usr/src and symlinked from the files under /lib/modules. You don't have to upload the manifest file to the container. This sctipt will do it for you.
+We have useful wrapper script for `docker run` since it requires a lot of arguments (like expose the Linux source to the container, make container privileged and so on). It assumes the kernel source is placed under the /usr/src and symlinked from the files under /lib/modules. You don't have to upload the manifest file to the container. This sctipt will do it for you.
 ```
 # ./scripts/ipftrace-docker -l4 ICMP manifest_on_the_host.yaml
 ```
