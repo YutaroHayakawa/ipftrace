@@ -183,7 +183,7 @@ We also have useful experimental script to generate the manifest from BTF inform
 ## How it works?
 It uses eBPF + kprobe for attaching the tracing programs to the kernel, parse the packet in the kprobe, filter out the unneccesary packets and output some log through perf. That's it. 
 
-## Limitation and Tips
+## Limitations and Tips
 - ipftrace cannot trace the function with skb_pos > 4 due to the limitation of the eBPF.
 - We recommend you to mark `kfree_skb` with `egress: true` this will catch the case which netfilter drops the packet.
 - ipftrace depends on the skb->network_header and skb->protocol to determine the IP address of the packet. So, if these informations are invalid, it cannot trace the function correctly. Due to this, ipftrace usually cannot trace the functions belongs to the "higher" layer than IP for TX path and "lower" layer than IP for RX path.
