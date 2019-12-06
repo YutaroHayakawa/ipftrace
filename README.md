@@ -32,18 +32,15 @@ Options:
 - Python3.7 or above
 - [BCC](https://github.com/iovisor/bcc)
 
-### Docker image
+### Run with Docker
 
-#### Install
 ```
-# docker pull yutarohayakawa/ipftrace:latest
+$ git clone https://github.com/YutaroHayakawa/ipftrace
+$ cd ipftrace
+$ sudo ./scripts/ipftrace-docker -l4 ICMP examples/generic.yaml
 ```
 
-#### Run
-We have useful wrapper script for `docker run` since it requires a lot of arguments (like expose the Linux source to the container, make container privileged and so on). It assumes the kernel source is placed under the /usr/src and symlinked from the files under /lib/modules. You don't have to upload the manifest file to the container. This sctipt will do it for you.
-```
-# ./scripts/ipftrace-docker -l4 ICMP manifest_on_the_host.yaml
-```
+ipftrace-docker is a wrapper script for `docker run`. Since the ipftrace container requires some boring things to make it work (like expose the Linux source to the container, make container privileged, uploading manifest file to the container and so on), this script does it for you.
 
 ### Install to your system
 
