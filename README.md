@@ -34,7 +34,7 @@ Options:
 ```
 $ git clone https://github.com/YutaroHayakawa/ipftrace
 $ cd ipftrace
-$ sudo ./scripts/ipftrace-docker -l4 ICMP examples/generic.yaml
+$ sudo ./scripts/ipftrace-docker -p ICMP examples/generic.yaml
 ```
 
 ipftrace-docker is a wrapper script for `docker run`. Since the ipftrace container requires some boring things to make it work (like expose the Linux source to the container, make container privileged, uploading manifest file to the container and so on), this script does it for you.
@@ -45,7 +45,7 @@ ipftrace-docker is a wrapper script for `docker run`. Since the ipftrace contain
 $ git clone https://github.com/YutaroHayakawa/ipftrace
 $ cd ipftrace
 $ sudo pip3 install .
-$ sudo ipftrace -l4 ICMP examples/generic.yaml
+$ sudo ipftrace -p ICMP examples/generic.yaml
 ```
 
 ## Examples
