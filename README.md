@@ -8,22 +8,19 @@ ipftrace is a simple function tracer for Linux networking code with flow based f
 ## Usage
 
 ```
-Usage: ipftrace [OPTIONS] MANIFEST_FILE
-
-  Function tracer for Linux networking code with flow based filtering
-
+Usage: ipftrace [OPTIONS] MANIFEST
+  Track the journey of the packets in Linux L3 layer
 Options:
-  -iv, --ipversion [any|4|6]  Specify IP version
-  -l4, --l4proto TEXT         Specify L4 protocol
-  -s4, --saddr4 TEXT          Specify IPv4 source address
-  -d4, --daddr4 TEXT          Specify IPv4 destination address
-  -s6, --saddr6 TEXT          Specify IPv6 source address
-  -d6, --daddr6 TEXT          Specify IPv6 destination address
-  -sp, --sport TEXT           Specify source port number
-  -dp, --dport TEXT           Specify destination port number
-  -m, --module TEXT           Specify custom match module name
-  -l, --list                  List available functions
-  --help                      Show this message and exit.
+  -iv, --ipversion [4|6]  Specify IP version
+  -s, --saddr TEXT        Specify IP source address
+  -d, --daddr TEXT        Specify IP destination address
+  -p, --proto TEXT        Specify protocol
+  -sp, --sport TEXT       Specify source port number
+  -dp, --dport TEXT       Specify destination port number
+  -m, --module TEXT       Specify custom match module name
+  -e, --regex TEXT        Filter the function names by regex
+  -l, --list-func         List available functions
+  --help                  Show this message and exit.
 ```
 
 ## Install
@@ -55,7 +52,7 @@ $ sudo ipftrace -l4 ICMP examples/generic.yaml
 
 Trace the ping ICMP packets
 ```
-# ipftrace -l4 ICMP examples/5.4.0-rc7-btf.yaml
+# ipftrace -p ICMP examples/5.4.0-rc7-btf.yaml
 <...>
 ICMP	10.231.244.75	->	10.128.218.64
      Time Stamp  Function
@@ -107,7 +104,7 @@ ICMP	10.128.218.64	->	10.231.244.75
 
 Trace the GSO behavior with custom module
 ```
-# ipftrace -l4 TCP -d4 10.231.206.32 -dp 8000 -m gso examples/5.4.0-rc7-btf.yaml
+# ipftrace -p TCP -d 10.231.206.32 -dp 8000 -m gso examples/5.4.0-rc7-btf.yaml
 <...>
 TCP    10.231.244.75:33696    ->    10.231.206.32:8000
      Time Stamp  Function                      Custom Data
