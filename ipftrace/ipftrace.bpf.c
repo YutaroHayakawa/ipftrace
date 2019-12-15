@@ -22,7 +22,7 @@
 struct event_data {
   uint64_t tstamp;
   uint64_t faddr;
-  uint8_t l4_protocol;
+  uint8_t protocol;
   uint16_t l3_protocol;
   union {
     struct {
@@ -39,6 +39,7 @@ struct event_data {
   uint8_t data[64];
 };
 
+#if L3_PROTO == 0x0008
 static inline bool
 ipv4_match(uint8_t **head, struct event_data *e)
 {
@@ -62,11 +63,13 @@ ipv4_match(uint8_t **head, struct event_data *e)
    */
   *head = *head + (iph.ihl * 4);
 
-  e->l4_protocol = iph.protocol;
+  e->protocol = iph.protocol;
 
   return ret;
 }
+#endif
 
+#if L3_PROTO == 0xdd86
 static inline bool
 ipv6_match(uint8_t **head, struct event_data *e)
 {
@@ -110,9 +113,30 @@ ipv6_match(uint8_t **head, struct event_data *e)
     }
   }
 
-  e->l4_protocol = nexthdr;
+  e->protocol = nexthdr;
 
   return true;
+}
+#endif
+
+static inline bool
+ip_match(uint8_t **head, struct event_data *e)
+{
+  bool matched;
+
+  if (e->l3_protocol != L3_PROTO) {
+    return false;
+  }
+
+#if L3_PROTO == 0x0008
+  matched = ipv4_match(head, e);
+#elif L3_PROTO == 0xdd86
+  matched = ipv6_match(head, e);
+#else
+  #error Unknown IP version
+#endif
+
+  return matched;
 }
 
 static inline bool
@@ -156,6 +180,35 @@ udp_match(uint8_t **head, struct event_data *e)
 }
 
 static inline bool
+transport_match(uint8_t **head, struct event_data *e)
+{
+  bool matched = true;
+
+#ifndef PROTO_ANY
+  if (e->protocol != PROTO) {
+    return false;
+  }
+#endif
+
+  /* 
+   * We will match to the inner most header for tunneling protocols
+   * so, ignore the L3 protocol `matched` flag for them.
+   */
+  switch (e->protocol) {
+    case 6: /* TCP */
+      matched = tcp_match(head, e);
+      break;
+    case 17: /* UDP */
+      matched = udp_match(head, e);
+      break;
+    default:
+      break;
+  }
+
+  return matched;
+}
+
+static inline bool
 match(struct pt_regs *ctx, struct sk_buff *skb, struct event_data *e)
 {
   bool matched;
@@ -168,55 +221,21 @@ match(struct pt_regs *ctx, struct sk_buff *skb, struct event_data *e)
 
   head += ipofs;
 
-#ifndef L3_PROTOCOL_ANY
-  if (e->l3_protocol != L3_PROTOCOL) return false;
-#endif
-
-  switch (e->l3_protocol) {
-    case 0x0008: /* IPv4 */
-      matched = ipv4_match(&head, e);
-      break;
-    case 0xdd86: /* IPv6 */
-      matched = ipv6_match(&head, e);
-      break;
-    default:
-      matched = false;
-      break;
+  if (!ip_match(&head, e)) {
+    return false;
   }
 
-  if (!matched) return false;
-
-#ifndef L4_PROTOCOL_ANY
-  if (e->l4_protocol != L4_PROTOCOL) return false;
-#endif
-
-  /* 
-   * We will match to the inner most header for tunneling protocols
-   * so, ignore the L3 protocol `matched` flag for them.
-   */
-  switch (e->l4_protocol) {
-    case 6: /* TCP */
-      matched = tcp_match(&head, e);
-      break;
-    case 13: /* UDP */
-      matched = udp_match(&head, e);
-      break;
-    default:
-      break;
+  if (!transport_match(&head, e)) {
+    return false;
   }
-
-  if (!matched) return false;
 
   return true;
 }
 
-/*
- * Default tracing action
- */
 BPF_PERF_OUTPUT(events);
 
 static inline void
-action(struct pt_regs *ctx, struct event_data *e)
+output(struct pt_regs *ctx, struct event_data *e)
 {
   events.perf_submit(ctx, e, sizeof(*e));
 }
@@ -248,7 +267,7 @@ static inline bool custom_match(void*, struct sk_buff*, uint8_t*);
   if (!custom_match(ctx, skb, e.data)) { \
     return; \
   } \
-  action(ctx, &e);
+  output(ctx, &e);
 
 void ipftrace_main1(struct pt_regs *ctx, struct sk_buff *skb)
 {

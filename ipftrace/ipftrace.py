@@ -19,29 +19,16 @@ from ctypes import *
 from ipftrace.modules import get_modules
 
 
-# Ethernet type name <=> Ethernet type mapping
-L3_PROTO_TO_ID = {}
-ID_TO_L3_PROTO = {}
-def init_ethertypes_mapping():
-    for line in open("/etc/ethertypes"):
-        spl = line.split()
-        if len(spl) == 0 or spl[0] == "#":
-            continue
-        ident = str(socket.htons(int(spl[1], 16)))
-        L3_PROTO_TO_ID[spl[0]] = ident
-        ID_TO_L3_PROTO[ident] = spl[0]
-
-
 # Protocol name <=> Protocol number mapping
-L4_PROTO_TO_ID = {}
-ID_TO_L4_PROTO = {}
+PROTO_TO_ID = {}
+ID_TO_PROTO = {}
 def init_protocol_mapping():
     for line in open("/etc/protocols"):
         spl = line.split()
         if len(spl) == 0 or spl[0] == "#":
             continue
-        L4_PROTO_TO_ID[spl[2]] = spl[1]
-        ID_TO_L4_PROTO[spl[1]] = spl[2]
+        PROTO_TO_ID[spl[2]] = spl[1]
+        ID_TO_PROTO[spl[1]] = spl[2]
 
 
 class V4Addrs(Structure):
@@ -75,8 +62,13 @@ class Flow:
     l4_protocol: str
     saddr: str
     daddr: str
-    sport: int
-    dport: int
+    sport: int = 0
+    dport: int = 0
+
+    def __str__(self):
+        src = self.saddr + (":" + str(self.sport) if self.sport != 0 else "")
+        dst = self.daddr + (":" + str(self.dport) if self.dport != 0 else "")
+        return f"{self.l4_protocol}\t{src}\t->\t{dst}"
 
 
 @dataclasses.dataclass(eq=True, frozen=True)
@@ -87,89 +79,92 @@ class EventLog:
 
 
 class IPFTracer:
-    def __init__(self, **kwargs):
-        self.args = kwargs
-        self.functions = None
-        self.egress_functions = []
-        self.id_to_ename = []
-        self.read_manifest()
-        self.probes = self.build_probes()
-        self.module = self.load_module()
-        self.flows = {}
+    def __init__(self, iv, saddr, daddr, proto,
+            sport, dport, module, regex, manifest):
+        self._opts = self._build_opts(iv, saddr, daddr, proto, sport, dport)
+        self._functions = self._read_manifest(manifest)
+        self._module = self._load_module(module)
+        self._regex = regex
+        self._egress_functions = []
+        self._flows = {}
 
-    def read_manifest(self):
-        with open(self.args["manifest_file"]) as f:
-            self.functions = yaml.load(f, Loader=yaml.FullLoader)["functions"]
+    def _read_manifest(self, manifest):
+        with open(manifest) as f:
+            return yaml.load(f, Loader=yaml.FullLoader)["functions"]
 
-    def load_module(self):
-        if self.args["module"] is None:
+    def _load_module(self, module):
+        if module is None:
             return None
 
         modules = get_modules()
-        module = modules[self.args["module"]]
+        module = modules[module]
 
         print("Loading module " + str(module))
 
         return module()
 
-    def build_l3_protocol_opt(self, protocol):
-        if protocol == "any":
-            return ["-D", "L3_PROTOCOL_ANY"]
-        else:
-            return ["-D", "L3_PROTOCOL=" + L3_PROTO_TO_ID[protocol]]
-
-    def build_l4_protocol_opt(self, protocol):
-        if protocol == "any":
-            return ["-D", "L4_PROTOCOL_ANY"]
-        else:
-            return ["-D", "L4_PROTOCOL=" + L4_PROTO_TO_ID[protocol]]
-
-    def inet_addr4(self, addr):
+    def _inet_addr4(self, addr):
         a = ipaddress.IPv4Address(addr).packed
         return str(int.from_bytes(a, byteorder="little"))
 
-    def build_addr4_opt(self, addr, direction):
+    def _build_addr4_opt(self, addr, direction):
         if addr == "any":
             return ["-D", direction + "ADDRV4_ANY"]
         else:
-            return ["-D", direction + "ADDRV4=" + self.inet_addr4(addr)]
+            return ["-D", direction + "ADDRV4=" + self._inet_addr4(addr)]
 
-    def inet_addr6(self, addr):
+    def _inet_addr6(self, addr):
         p = ipaddress.IPv6Address(addr).packed
         a = ",".join(list(map(lambda b: str(b), p)))
         return a
 
-    def build_addr6_opt(self, addr, direction):
+    def _build_addr6_opt(self, addr, direction):
         if addr == "any":
             return ["-D", direction + "ADDRV6_ANY"]
         else:
-            return ["-D", direction + "ADDRV6=" + self.inet_addr6(addr)]
+            return ["-D", direction + "ADDRV6=" + self._inet_addr6(addr)]
 
+    def _build_ip_opt(self, iv, saddr, daddr):
+        if iv == "4":
+            ret = ["-D", "L3_PROTO=0x0008"]
+            ret += self._build_addr4_opt(saddr, "S")
+            ret += self._build_addr4_opt(daddr, "D")
+        elif iv == "6":
+            ret = ["-D", "L3_PROTO=0xdd86"]
+            ret += self._build_addr6_opt(saddr, "S")
+            ret += self._build_addr6_opt(daddr, "D")
+        else:
+            raise ValueError("Unknown IP version {}".format(iv))
 
-    def build_port_opt(self, port, direction):
+        return ret
+
+    def _build_proto_opt(self, proto):
+        if proto == "any":
+            return ["-D", "PROTO_ANY"]
+        else:
+            return ["-D", "PROTO=" + PROTO_TO_ID[proto]]
+
+    def _build_port_opt(self, port, direction):
         if port == "any":
             return ["-D", direction + "PORT_ANY"]
         else:
+            port = str(socket.htons(int(port)))
             return ["-D", direction + "PORT=" + port]
 
-    def build_opts(self):
+    def _build_opts(self, iv, saddr, daddr, proto, sport, dport):
         opts = []
-        opts += self.build_l3_protocol_opt(self.args["l3proto"])
-        opts += self.build_l4_protocol_opt(self.args["l4proto"])
-        opts += self.build_addr4_opt(self.args["saddr4"], "S")
-        opts += self.build_addr4_opt(self.args["daddr4"], "D")
-        opts += self.build_addr6_opt(self.args["saddr6"], "S")
-        opts += self.build_addr6_opt(self.args["daddr6"], "D")
-        opts += self.build_port_opt(self.args["sport"], "S")
-        opts += self.build_port_opt(self.args["dport"], "D")
+        opts += self._build_ip_opt(iv, saddr, daddr)
+        opts += self._build_proto_opt(proto)
+        opts += self._build_port_opt(sport, "S")
+        opts += self._build_port_opt(dport, "D")
         return opts
 
-    def build_probes(self):
+    def _build_probes(self):
         bpf_src = os.path.join(os.path.dirname(__file__), "ipftrace.bpf.c")
         ret = open(bpf_src).read()
 
         try:
-            ret += self.module.gen_match()
+            ret += self._module.gen_match()
         except:
             ret += textwrap.dedent(
                 """
@@ -181,12 +176,11 @@ class IPFTracer:
 
         return ret
 
-    def attach_probes(self):
-        probes = self.build_probes()
-        opts = self.build_opts()
-        b = BPF(text=probes, cflags=opts)
+    def _attach_probes(self):
+        probes = self._build_probes()
+        b = BPF(text=probes, cflags=self._opts)
 
-        for f in self.functions:
+        for f in self._functions:
             name = f["name"]
             skb_pos = f["skb_pos"]
 
@@ -194,22 +188,25 @@ class IPFTracer:
                 print(f"Invalid skb_pos for function {name}. It should be lower than 4.")
                 exit(1)
 
+            if self._regex != None and not re.match(self._regex, name):
+                continue
+
             try:
                 b.attach_kprobe(event=name, fn_name=f"ipftrace_main{skb_pos}")
             except:
                 print(f"Couldn't attach kprobe to function {name}")
 
             if f.get("egress", False):
-                self.egress_functions.append(name)
+                self._egress_functions.append(name)
 
         return b
 
     def list_functions(self):
-        for f in self.functions:
+        for f in self._functions:
             name = f["name"]
             print(f"{name}")
 
-    def parse_l3_proto(self, event):
+    def _parse_l3_proto(self, event):
         if event.l3_protocol == 0x0008:  # IPv4
             saddr = ipaddress.IPv4Address(socket.ntohl(event.addrs.v4.saddr))
             daddr = ipaddress.IPv4Address(socket.ntohl(event.addrs.v4.daddr))
@@ -222,22 +219,62 @@ class IPFTracer:
 
         return (str(saddr), str(daddr))
 
-    def parse_l4_proto(self, event):
-        l4_proto = ID_TO_L4_PROTO[str(event.l4_protocol)]
-        sport = str(socket.ntohs(event.sport))
-        dport = str(socket.ntohs(event.dport))
+    def _parse_l4_proto(self, event):
+        l4_proto = ID_TO_PROTO[str(event.l4_protocol)]
+        sport = socket.ntohs(event.sport)
+        dport = socket.ntohs(event.dport)
         return (l4_proto, sport, dport)
 
-    def handle_lost(self, lost):
-        self.flows.clear()
+    def _parse_custom_data(self, event):
+        if self._module != None:
+            try:
+                custom_data = self._module.parse_data(event.data)
+            except Exception as e:
+                print(e)
+                custom_data = None
+        else:
+            custom_data = None
 
-    def handle_event(self, cpu, data, size):
+        return custom_data
+
+    def _print_function_trace(self, flow, event_logs):
+        if self._module != None:
+            header = ["Time Stamp", "Function", "Custom Data"]
+            table = [ [e.time_stamp, e.event_name, e.custom_data] for e in event_logs ]
+        else:
+            header = ["Time Stamp", "Function"]
+            table = [ [e.time_stamp, e.event_name] for e in event_logs ]
+
+        print(flow)
+        print(tabulate.tabulate(table, header, tablefmt="plain"))
+        print("")
+
+    def _dump_unterminated_event_logs(self):
+        print("======== Unterminated Flows ========")
+        for flow, event_logs in self._flows.items():
+            if len(event_logs) > 40:
+                event_logs = event_logs[:39]
+                trancate = True
+            else:
+                trancate = False
+
+            self._print_function_trace(flow, event_logs)
+
+            if trancate:
+                print("<trancated...>\n")
+        print("==== End of Unterminated Flows =====")
+
+    def _handle_lost(self, lost):
+        self._flows.clear()
+
+    def _handle_event(self, cpu, data, size):
         event = cast(data, POINTER(EventData)).contents
 
         fname = BPF.ksym(event.faddr).decode("utf-8")
         tstamp = str(event.tstamp)
-        saddr, daddr = self.parse_l3_proto(event)
-        l4_proto, sport, dport = self.parse_l4_proto(event)
+        saddr, daddr = self._parse_l3_proto(event)
+        l4_proto, sport, dport = self._parse_l4_proto(event)
+        custom_data = self._parse_custom_data(event)
 
         flow = Flow(
             l4_protocol=l4_proto,
@@ -247,91 +284,75 @@ class IPFTracer:
             dport=dport,
         )
 
-        event_logs = self.flows.get(flow, [])
-
-        if self.module != None:
-            try:
-                custom_data = self.module.parse_data(event.data)
-            except Exception as e:
-                print(e)
-                custom_data = None
-        else:
-            custom_data = None
-
+        event_logs = self._flows.get(flow, [])
         event_logs.append(EventLog(tstamp, fname, custom_data))
+        self._flows[flow] = event_logs
 
-        self.flows[flow] = event_logs
-
-        if fname in self.egress_functions:
-            src = saddr + (":" + sport if sport != "0" else "")
-            dst = daddr + (":" + dport if dport != "0" else "")
-            if self.module != None:
-                header = ["Time Stamp", "Function", "Custom Data"]
-                table = [ [e.time_stamp, e.event_name, e.custom_data] for e in event_logs ]
-            else:
-                header = ["Time Stamp", "Function"]
-                table = [ [e.time_stamp, e.event_name] for e in event_logs ]
-            print(f"{l4_proto}\t{src}\t->\t{dst}")
-            print(tabulate.tabulate(table, header, tablefmt="plain"))
-            print("")
-            del self.flows[flow]
+        #
+        # Print the function trace if it is terminated
+        #
+        if fname in self._egress_functions:
+            self._print_function_trace(flow, event_logs)
+            del self._flows[flow]
 
     def run_tracing(self):
-        b = self.attach_probes()
+        b = self._attach_probes()
         events = b["events"]
 
-        events.open_perf_buffer(self.handle_event, lost_cb=self.handle_lost, page_cnt=64)
+        events.open_perf_buffer(self._handle_event, lost_cb=self._handle_lost, page_cnt=64)
 
         print("Trace ready!")
         while 1:
             try:
                 b.perf_buffer_poll()
             except KeyboardInterrupt:
+                self._dump_unterminated_event_logs()
                 print("Got keyboard interrupt. Detaching probes...")
-                exit(0)
+
+                #
+                # FIXME: b.clear() ends up to the exception on atexit handler.
+                # So, we will release only kprobes in here.
+                #
+                for k, v in list(b.kprobe_fds.items()):
+                    b.detach_kprobe_event(k)
+
+                print("Finish detaching")
+                return
 
 
 @click.command()
-@click.option("-iv", "--ipversion", default="any", type=click.Choice(["any", "4", "6"]), help="Specify IP version")
-@click.option("-l4", "--l4proto", default="any", help="Specify L4 protocol")
-@click.option("-s4", "--saddr4", default="any", help="Specify IPv4 source address")
-@click.option("-d4", "--daddr4", default="any", help="Specify IPv4 destination address")
-@click.option("-s6", "--saddr6", default="any", help="Specify IPv6 source address")
-@click.option("-d6", "--daddr6", default="any", help="Specify IPv6 destination address")
+@click.option("-iv", "--ipversion", default="4", type=click.Choice(["4", "6"]), help="Specify IP version")
+@click.option("-s", "--saddr", default="any", help="Specify IP source address")
+@click.option("-d", "--daddr", default="any", help="Specify IP destination address")
+@click.option("-p", "--proto", default="any", help="Specify protocol")
 @click.option("-sp", "--sport", default="any", help="Specify source port number")
 @click.option("-dp", "--dport", default="any", help="Specify destination port number")
 @click.option("-m", "--module", default=None, help="Specify custom match module name")
-@click.option("-l", "--list", is_flag=True, help="List available functions")
-@click.argument("manifest-file")
-def main(ipversion, l4proto, saddr4, daddr4, saddr6, daddr6, sport, dport, module, list, manifest_file):
+@click.option("-e", "--regex", default=None, help="Filter the function names by regex")
+@click.option("-l", "--list-func", is_flag=True, help="List available functions")
+@click.argument("manifest")
+def main(ipversion, saddr, daddr, proto, sport, dport, module, regex, list_func, manifest):
     """
     Track the journey of the packets in Linux L3 layer
     """
 
-    if ipversion == "any":
-        l3proto = "any"
-    else:
-        l3proto = "IPv" + ipversion
+    init_protocol_mapping()
 
     ift = IPFTracer(
-        l3proto=l3proto,
-        l4proto=l4proto,
-        saddr4=saddr4,
-        daddr4=daddr4,
-        saddr6=saddr6,
-        daddr6=daddr6,
+        iv=ipversion,
+        saddr=saddr,
+        daddr=daddr,
+        proto=proto,
         sport=sport,
         dport=dport,
         module=module,
-        manifest_file=manifest_file
+        regex=regex,
+        manifest=manifest
     )
 
-    if list:
+    if list_func:
         ift.list_functions()
         exit(0)
-
-    init_ethertypes_mapping()
-    init_protocol_mapping()
 
     ift.run_tracing()
 
