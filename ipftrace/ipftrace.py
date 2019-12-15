@@ -333,7 +333,7 @@ class IPFTracer:
 @click.argument("manifest")
 def main(ipversion, saddr, daddr, proto, sport, dport, module, regex, list_func, manifest):
     """
-    Track the journey of the packets in Linux L3 layer
+    Track the journey of the packets in Linux network stack
     """
 
     init_protocol_mapping()
