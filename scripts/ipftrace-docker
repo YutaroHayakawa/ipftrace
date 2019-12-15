@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
-IPFTRACE="yutarohayakawa/ipftrace:latest"
+
+if [ -z $IPFTRACE_DOCKER_IMAGE ]; then
+  IPFTRACE="yutarohayakawa/ipftrace:latest"
+else
+  IPFTRACE=$IPFTRACE_DOCKER_IMAGE
+fi
 
 function usage() {
   echo "Usage: $0 <ipftrace arguments>"
