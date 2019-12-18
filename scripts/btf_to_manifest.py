@@ -30,10 +30,12 @@ for t in j["types"]:
             if p["name"] == "skb":
                 protos.append({ "skb_pos": i + 1, "type_info": t })
 
-ret = { "functions": { "all": [] } }
+ret = { "functions": [] }
 for f in funcs:
     for p in protos:
         if p["type_info"]["id"] == f["type_id"]:
-            ret["functions"]["all"].append({ "name": f["name"], "skb_pos": p["skb_pos"] })
+            if p["skb_pos"] > 4:
+                continue
+            ret["functions"].append({ "name": f["name"], "skb_pos": p["skb_pos"] })
 
 print(yaml.dump(ret))
