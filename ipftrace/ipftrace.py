@@ -204,6 +204,8 @@ class IPFTracer:
     def list_functions(self):
         for f in self._functions:
             name = f["name"]
+            if self._regex != None and not re.match(self._regex, name):
+                continue
             print(f"{name}")
 
     def _parse_l3_proto(self, event):
@@ -328,7 +330,7 @@ class IPFTracer:
 @click.option("-sp", "--sport", default="any", help="Specify source port number")
 @click.option("-dp", "--dport", default="any", help="Specify destination port number")
 @click.option("-m", "--module", default=None, help="Specify custom match module name")
-@click.option("-e", "--regex", default=None, help="Filter the function names by regex")
+@click.option("-r", "--regex", default=None, help="Filter the function names by regex")
 @click.option("-l", "--list-func", is_flag=True, help="List available functions")
 @click.argument("manifest")
 def main(ipversion, saddr, daddr, proto, sport, dport, module, regex, list_func, manifest):
