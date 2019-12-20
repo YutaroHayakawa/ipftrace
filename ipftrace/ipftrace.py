@@ -80,11 +80,12 @@ class EventLog:
 
 class IPFTracer:
     def __init__(self, iv, saddr, daddr, proto,
-            sport, dport, module, regex, manifest):
+            sport, dport, module, regex, length, manifest):
         self._opts = self._build_opts(iv, saddr, daddr, proto, sport, dport)
         self._functions = self._read_manifest(manifest)
         self._module = self._load_module(module)
         self._regex = regex
+        self._length = length
         self._egress_functions = []
         self._flows = {}
 
@@ -291,6 +292,13 @@ class IPFTracer:
         self._flows[flow] = event_logs
 
         #
+        # Print the function trace if it reaches to the length limit
+        #
+        if len(event_logs) == self._length:
+            self._print_function_trace(flow, event_logs)
+            del self._flows[flow]
+
+        #
         # Print the function trace if it is terminated
         #
         if fname in self._egress_functions:
@@ -331,9 +339,10 @@ class IPFTracer:
 @click.option("-dp", "--dport", default="any", help="Specify destination port number")
 @click.option("-m", "--module", default=None, help="Specify custom match module name")
 @click.option("-r", "--regex", default=None, help="Filter the function names by regex")
+@click.option("-l", "--length", default=40, help="Specify the length of function trace")
 @click.option("-ls", "--list-func", is_flag=True, help="List available functions")
 @click.argument("manifest")
-def main(ipversion, saddr, daddr, proto, sport, dport, module, regex, list_func, manifest):
+def main(ipversion, saddr, daddr, proto, sport, dport, module, regex, length, list_func, manifest):
     """
     Track the journey of the packets in Linux network stack
     """
@@ -349,6 +358,7 @@ def main(ipversion, saddr, daddr, proto, sport, dport, module, regex, list_func,
         dport=dport,
         module=module,
         regex=regex,
+        length=length,
         manifest=manifest
     )
 
