@@ -252,21 +252,6 @@ class IPFTracer:
         print(tabulate.tabulate(table, header, tablefmt="plain"))
         print("")
 
-    def _dump_unterminated_event_logs(self):
-        print("======== Unterminated Flows ========")
-        for flow, event_logs in self._flows.items():
-            if len(event_logs) > 40:
-                event_logs = event_logs[:39]
-                trancate = True
-            else:
-                trancate = False
-
-            self._print_function_trace(flow, event_logs)
-
-            if trancate:
-                print("<trancated...>\n")
-        print("==== End of Unterminated Flows =====")
-
     def _handle_lost(self, lost):
         self._flows.clear()
 
@@ -316,7 +301,6 @@ class IPFTracer:
             try:
                 b.perf_buffer_poll()
             except KeyboardInterrupt:
-                self._dump_unterminated_event_logs()
                 print("Got keyboard interrupt. Detaching probes...")
 
                 #
