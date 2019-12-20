@@ -323,7 +323,7 @@ class IPFTracer:
 @click.option("-dp", "--dport", default="any", help="Specify destination port number")
 @click.option("-m", "--module", default=None, help="Specify custom match module name")
 @click.option("-r", "--regex", default=None, help="Filter the function names by regex")
-@click.option("-l", "--length", default=40, help="Specify the length of function trace")
+@click.option("-l", "--length", default=80, help="Specify the length of function trace")
 @click.option("-ls", "--list-func", is_flag=True, help="List available functions")
 @click.argument("manifest")
 def main(ipversion, saddr, daddr, proto, sport, dport, module, regex, length, list_func, manifest):
