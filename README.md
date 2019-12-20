@@ -9,7 +9,9 @@ ipftrace is a simple function tracer for Linux networking code with flow based f
 
 ```
 Usage: ipftrace [OPTIONS] MANIFEST
-  Track the journey of the packets in Linux L3 layer
+
+  Track the journey of the packets in Linux network stack
+
 Options:
   -iv, --ipversion [4|6]  Specify IP version
   -s, --saddr TEXT        Specify IP source address
@@ -18,8 +20,9 @@ Options:
   -sp, --sport TEXT       Specify source port number
   -dp, --dport TEXT       Specify destination port number
   -m, --module TEXT       Specify custom match module name
-  -e, --regex TEXT        Filter the function names by regex
-  -l, --list-func         List available functions
+  -r, --regex TEXT        Filter the function names by regex
+  -l, --length INTEGER    Specify the length of function trace
+  -ls, --list-func        List available functions
   --help                  Show this message and exit.
 ```
 
