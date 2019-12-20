@@ -85,8 +85,6 @@ functions:
 
   - name: dev_hard_start_xmit
     skb_pos: 1
-    egress: true
 
   - name: kfree_skb
     skb_pos: 1
-    egress: true

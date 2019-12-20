@@ -337,7 +337,6 @@ functions:
   skb_pos: 3
 - name: igb_xmit_frame_ring
   skb_pos: 1
-  egress: true
 - name: igb_ptp_rx_pktstamp
   skb_pos: 3
 - name: igb_ptp_rx_rgtstamp
@@ -1262,7 +1261,6 @@ functions:
   skb_pos: 2
 - name: sock_rfree
   skb_pos: 1
-  egress: true
 - name: skb_orphan_partial
   skb_pos: 1
 - name: skb_set_owner_w
@@ -1279,7 +1277,6 @@ functions:
   skb_pos: 1
 - name: __sock_wfree
   skb_pos: 1
-  egress: true
 - name: sk_wait_data
   skb_pos: 3
 - name: skb_prepare_seq_read
