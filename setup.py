@@ -6,6 +6,9 @@ setup(
     author="Yutaro Hayakawa",
     author_email="yhayakawa3720@gmail.com",
     install_requires=["click", "pyyaml", "tabulate"],
+    extras_require={
+        "dev": ["black"]
+    },
     packages=["ipftrace"],
     package_data={"ipftrace": ["ipftrace.bpf.c"]},
     entry_points={
