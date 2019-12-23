@@ -1,6 +1,5 @@
 from ctypes import *
 from enum import IntFlag
-from ipftrace.modules.module import IPFTraceModule
 
 
 class FeatureFlags(IntFlag):
@@ -33,48 +32,53 @@ class GSOData(Structure):
     ]
 
 
-class GSOModule(IPFTraceModule):
-    def __init__(self):
-        super().__init__()
+def parse_features(features):
+    ret = []
+    for f in FeatureFlags:
+        if features & f:
+            ret.append(str(f.name))
+    return "|".join(ret)
 
-    def parse_features(self, features):
-        ret = []
-        for f in FeatureFlags:
-            if features & f:
-                ret.append(str(f.name))
-        return "|".join(ret)
 
-    def gen_match(self):
-        return """
-        struct gso_data {
-          unsigned int len;
-          unsigned short gso_size;
-          unsigned short gso_segs;
-          unsigned int gso_type;
-        };
-    
-        static inline bool
-        custom_match(void *ctx, struct sk_buff *skb, uint8_t *data) {
-          void *head;
-          sk_buff_data_t end;
-          struct skb_shared_info *shinfo;
-          struct gso_data *gd = (struct gso_data *)data;
-    
-          member_read(&head, skb, head);
-          member_read(&end, skb, end);
-          member_read(&gd->len, skb, len);
-    
-          shinfo = head + end;
-    
-          member_read(&gd->gso_size, shinfo, gso_size);
-          member_read(&gd->gso_segs, shinfo, gso_segs);
-          member_read(&gd->gso_type, shinfo, gso_type);
-    
-          return true;
-        }
-        """
+def get_name():
+    return "GSO"
 
-    def parse_data(self, data):
-        gd = cast(data, POINTER(GSOData)).contents
-        features = self.parse_features(gd.gso_type)
-        return f" (len: {gd.len} gso_size: {gd.gso_size} gso_segs: {gd.gso_segs} gso_type: {features})"
+
+def generate_include():
+    return ""
+    
+
+def generate_match():
+    return """
+    struct gso_data {
+      unsigned int len;
+      unsigned short gso_size;
+      unsigned short gso_segs;
+      unsigned int gso_type;
+    };
+
+    static inline bool
+    custom_match(void *ctx, struct sk_buff *skb, uint8_t *data) {
+      void *head;
+      sk_buff_data_t end;
+      struct skb_shared_info *shinfo;
+      struct gso_data *gd = (struct gso_data *)data;
+
+      member_read(&head, skb, head);
+      member_read(&end, skb, end);
+      member_read(&gd->len, skb, len);
+
+      shinfo = head + end;
+
+      member_read(&gd->gso_size, shinfo, gso_size);
+      member_read(&gd->gso_segs, shinfo, gso_segs);
+      member_read(&gd->gso_type, shinfo, gso_type);
+
+      return true;
+    }
+    """
+
+def parse_data(data):
+    gd = cast(data, POINTER(GSOData)).contents
+    features = parse_features(gd.gso_type)
+    return f" (len: {gd.len} gso_size: {gd.gso_size} gso_segs: {gd.gso_segs} gso_type: {features})"

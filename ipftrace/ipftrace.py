@@ -78,9 +78,29 @@ class EventLog:
     custom_data: str
 
 
+class DefaultModule:
+    def get_name(self):
+        return "Default"
+
+    def generate_include(self):
+        return ""
+
+    def generate_match(self):
+        return """
+        static inline bool
+        custom_match(void *ctx, struct sk_buff *skb, uint8_t *data) {
+            return true;
+        }
+        """
+
+    def parse_data(self, data):
+        return ""
+
+
 class IPFTracer:
-    def __init__(self, iv, saddr, daddr, proto,
-            sport, dport, module, regex, length, manifest):
+    def __init__(
+        self, iv, saddr, daddr, proto, sport, dport, module, regex, length, manifest
+    ):
         self._opts = self._build_opts(iv, saddr, daddr, proto, sport, dport)
         self._functions = self._read_manifest(manifest)
         self._module = self._load_module(module)
@@ -93,16 +113,17 @@ class IPFTracer:
         with open(manifest) as f:
             return yaml.load(f, Loader=yaml.FullLoader)["functions"]
 
-    def _load_module(self, module):
-        if module is None:
-            return None
+    def _load_module(self, module_path):
+        if module_path is None:
+            module = DefaultModule()
+        else:
+            spec = importlib.util.spec_from_file_location("module", module_path)
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
 
-        modules = get_modules()
-        module = modules[module]
+        print(f'Loading module "{module.get_name()}"')
 
-        print("Loading module " + str(module))
-
-        return module()
+        return module
 
     def _inet_addr4(self, addr):
         a = ipaddress.IPv4Address(addr).packed
@@ -160,25 +181,20 @@ class IPFTracer:
         opts += self._build_port_opt(dport, "D")
         return opts
 
-    def _build_probes(self):
+    def _build_bpf_prog(self):
+        bpf_hdr = os.path.join(os.path.dirname(__file__), "ipftrace.bpf.h")
         bpf_src = os.path.join(os.path.dirname(__file__), "ipftrace.bpf.c")
-        ret = open(bpf_src).read()
 
-        try:
-            ret += self._module.gen_match()
-        except:
-            ret += textwrap.dedent(
-                """
-                static inline bool custom_match(void *ctx, struct sk_buff *skb, uint8_t *data) {
-                  return true;
-                }
-                """
-            )
+        prog = ""
+        prog += open(bpf_hdr).read()
+        prog += self._module.generate_include()
+        prog += open(bpf_src).read()
+        prog += self._module.generate_match()
 
-        return ret
+        return prog
 
     def _attach_probes(self):
-        probes = self._build_probes()
+        probes = self._build_bpf_prog()
         b = BPF(text=probes, cflags=self._opts)
 
         for f in self._functions:
