@@ -16,12 +16,13 @@ import subprocess
 import dataclasses
 from bcc import BPF
 from ctypes import *
-from ipftrace.modules import get_modules
 
 
 # Protocol name <=> Protocol number mapping
 PROTO_TO_ID = {}
 ID_TO_PROTO = {}
+
+
 def init_protocol_mapping():
     for line in open("/etc/protocols"):
         spl = line.split()
@@ -202,7 +203,9 @@ class IPFTracer:
             skb_pos = f["skb_pos"]
 
             if skb_pos > 4:
-                print(f"Invalid skb_pos for function {name}. It should be lower than 4.")
+                print(
+                    f"Invalid skb_pos for function {name}. It should be lower than 4."
+                )
                 exit(1)
 
             if self._regex != None and not re.match(self._regex, name):
@@ -229,7 +232,7 @@ class IPFTracer:
         if event.l3_protocol == 0x0008:  # IPv4
             saddr = ipaddress.IPv4Address(socket.ntohl(event.addrs.v4.saddr))
             daddr = ipaddress.IPv4Address(socket.ntohl(event.addrs.v4.daddr))
-        elif event.l3_protocol == 0xdd86:  # IPv6
+        elif event.l3_protocol == 0xDD86:  # IPv6
             saddr = ipaddress.IPv6Address(bytes(event.addrs.v6.saddr))
             daddr = ipaddress.IPv6Address(bytes(event.addrs.v6.daddr))
         else:
@@ -273,11 +276,7 @@ class IPFTracer:
         custom_data = self._parse_custom_data(event)
 
         flow = Flow(
-            l4_protocol=l4_proto,
-            saddr=saddr,
-            daddr=daddr,
-            sport=sport,
-            dport=dport,
+            l4_protocol=l4_proto, saddr=saddr, daddr=daddr, sport=sport, dport=dport,
         )
 
         event_logs = self._flows.get(flow, [])
@@ -285,56 +284,58 @@ class IPFTracer:
         self._flows[flow] = event_logs
 
         #
-        # Print the function trace if it reaches to the length limit
+        # Print the function trace if
         #
-        if len(event_logs) == self._length:
-            self._print_function_trace(flow, event_logs)
-            del self._flows[flow]
-
+        # 1. The skb reaches to the egress function
+        # 2. The function trace reaches to the length limit
         #
-        # Print the function trace if it is terminated
-        #
-        if fname in self._egress_functions:
+        if fname in self._egress_functions or len(event_logs) == self._length:
             self._print_function_trace(flow, event_logs)
             del self._flows[flow]
 
     def run_tracing(self):
         b = self._attach_probes()
-        events = b["events"]
-
-        events.open_perf_buffer(self._handle_event, lost_cb=self._handle_lost, page_cnt=64)
+        event = b["events"]
+        event.open_perf_buffer(
+            self._handle_event, lost_cb=self._handle_lost, page_cnt=64
+        )
 
         print("Trace ready!")
         while 1:
-            try:
-                b.perf_buffer_poll()
-            except KeyboardInterrupt:
-                print("Got keyboard interrupt. Detaching probes...")
-
-                #
-                # FIXME: b.clear() ends up to the exception on atexit handler.
-                # So, we will release only kprobes in here.
-                #
-                for k, v in list(b.kprobe_fds.items()):
-                    b.detach_kprobe_event(k)
-
-                print("Finish detaching")
-                return
+            b.perf_buffer_poll()
 
 
 @click.command()
-@click.option("-iv", "--ipversion", default="4", type=click.Choice(["4", "6"]), help="Specify IP version")
+@click.option(
+    "-iv",
+    "--ipversion",
+    default="4",
+    type=click.Choice(["4", "6"]),
+    help="Specify IP version",
+)
 @click.option("-s", "--saddr", default="any", help="Specify IP source address")
 @click.option("-d", "--daddr", default="any", help="Specify IP destination address")
 @click.option("-p", "--proto", default="any", help="Specify protocol")
 @click.option("-sp", "--sport", default="any", help="Specify source port number")
 @click.option("-dp", "--dport", default="any", help="Specify destination port number")
-@click.option("-m", "--module", default=None, help="Specify custom match module name")
+@click.option("-m", "--module", default=None, help="Specify custom match module path")
 @click.option("-r", "--regex", default=None, help="Filter the function names by regex")
 @click.option("-l", "--length", default=80, help="Specify the length of function trace")
 @click.option("-ls", "--list-func", is_flag=True, help="List available functions")
 @click.argument("manifest")
-def main(ipversion, saddr, daddr, proto, sport, dport, module, regex, length, list_func, manifest):
+def main(
+    ipversion,
+    saddr,
+    daddr,
+    proto,
+    sport,
+    dport,
+    module,
+    regex,
+    length,
+    list_func,
+    manifest,
+):
     """
     Track the journey of the packets in Linux network stack
     """
@@ -351,14 +352,17 @@ def main(ipversion, saddr, daddr, proto, sport, dport, module, regex, length, li
         module=module,
         regex=regex,
         length=length,
-        manifest=manifest
+        manifest=manifest,
     )
 
     if list_func:
         ift.list_functions()
         exit(0)
 
-    ift.run_tracing()
+    try:
+        ift.run_tracing()
+    except KeyboardInterrupt:
+        print("Tracing finished. Detaching probes...")
 
 
 if __name__ == "__main__":
