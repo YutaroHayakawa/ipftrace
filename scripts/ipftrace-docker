@@ -1,40 +1,141 @@
-#!/usr/bin/env bash
+#!/usr/bin/env python3
 
-if [ -z $IPFTRACE_DOCKER_IMAGE ]; then
-  IPFTRACE="yutarohayakawa/ipftrace:latest"
-else
-  IPFTRACE=$IPFTRACE_DOCKER_IMAGE
-fi
+import os
+import sys
+import signal
+import argparse
+import subprocess
 
-function usage() {
-  echo "Usage: $0 <ipftrace arguments>"
-  echo "=== ipftrace usage ==="
-  docker run --rm $IPFTRACE --help
-  exit 1
-}
 
-if [ -z ${BASH_ARGC} ]; then
-  usage
-fi
+command = []
+ipftrace_opts = []
 
-ARGS=(${@})
-MANIFEST=${ARGS[-1]}
-IPFTRACE_ARGS=${ARGS[@]:0:$((${BASH_ARGC} - 1))}
 
-if [ ! -f $MANIFEST ]; then
-  echo "$MANIFEST is not likely a manifest file"
-  usage
-fi
+def stream_output(process):
+    while True:
+        output = process.stdout.readline()
+        print(output.strip())
+        # Do something else
+        return_code = process.poll()
+        if return_code is not None:
+            # Process has finished, read rest of the output
+            for output in process.stdout.readlines():
+                print(output.strip())
+            break
 
-if [ "${MANIFEST:0:1}" != "/" ]; then
-  MANIFEST=$(pwd)/$MANIFEST
-fi
 
-docker run --privileged --rm \
-  -v $MANIFEST:/manifest.yaml \
-  -v /sys/kernel/debug:/sys/kernel/debug \
-  -v /lib/modules:/lib/modules \
-  -v /usr/src:/usr/src \
-  $IPFTRACE \
-  $IPFTRACE_ARGS \
-  /manifest.yaml
+def passthrough_opt(name, val):
+    if val == None:
+        return
+
+    ipftrace_opts.extend([f"--{name}", val])
+
+
+def passthrough_flag(name):
+    ipftrace_opts.append("--{name}")
+
+
+#
+# Add option to mount local module file to container
+#
+def handle_opt_module(val):
+    p = os.path.abspath(val)
+    command.extend(["-v", f"{p}:/module.py"])
+    ipftrace_opts.extend(["--module", "/module.py"])
+
+
+def handle_opt_manifest(val):
+    p = os.path.abspath(val)
+    command.extend(["-v", f"{p}:/manifest.yaml"])
+
+
+#
+# Print "real" ipftrace help if user needs help
+#
+def handle_opt_help():
+    ret = subprocess.run(
+        ["docker", "run", "--rm", "ipftrace:dev", "--help"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    print(ret.stdout.decode("utf-8"))
+
+
+#
+# Define stub arguments in here. Most of them will be passed through to
+# the ipftrace, but some of them should be tweaked to execute ipftrace
+# inside the container
+#
+ap = argparse.ArgumentParser(description="ipftrace docker wrapper", add_help=False)
+ap.add_argument("-iv", "--ipversion")
+ap.add_argument("-s", "--saddr")
+ap.add_argument("-d", "--daddr")
+ap.add_argument("-p", "--proto")
+ap.add_argument("-sp", "--sport")
+ap.add_argument("-dp", "--dport")
+ap.add_argument("-m", "--module")
+ap.add_argument("-r", "--regex")
+ap.add_argument("-l", "--length")
+ap.add_argument("-ls", "--list-func", action="store_true")
+ap.add_argument("-h", "--help", action="store_true")
+ap.add_argument("manifest")
+
+args = ap.parse_args()
+
+
+if __name__ == "__main__":
+    if args.help:
+        handle_opt_help()
+        exit(0)
+
+    command.extend(["docker", "run", "--rm", "--privileged"])
+    command.extend(["-v", "/sys/kernel/debug:/sys/kernel/debug"])
+    command.extend(["-v", "/lib/modules:/lib/modules"])
+    command.extend(["-v", "/usr/src:/usr/src"])
+
+    passthrough_opt("ipversion", args.ipversion)
+    passthrough_opt("saddr", args.saddr)
+    passthrough_opt("daddr", args.daddr)
+    passthrough_opt("proto", args.proto)
+    passthrough_opt("sport", args.sport)
+    passthrough_opt("dport", args.dport)
+    handle_opt_manifest(args.manifest)
+
+    if args.module != None:
+        handle_opt_module(args.module)
+
+    passthrough_opt("regex", args.regex)
+    passthrough_opt("length", args.length)
+
+    if args.list_func:
+        passthrough_flag("list_func")
+
+    #
+    # Take image name from environment variable if it exists
+    #
+    command.append(os.getenv("IPFTRACE_DOCKER_IMAGE", "yutarohayakawa/ipftrace:latest"))
+
+    #
+    # Append ipftrace options
+    #
+    command.extend(ipftrace_opts)
+
+    #
+    # Use mounted local manifest
+    #
+    command.append("/manifest.yaml")
+
+    #
+    # Stream the output
+    #
+    process = subprocess.Popen(
+        command,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        universal_newlines=True,
+    )
+    try:
+        stream_output(process)
+    except KeyboardInterrupt:
+        process.send_signal(signal.SIGINT)
+        stream_output(process)
