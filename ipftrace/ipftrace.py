@@ -245,25 +245,17 @@ class IPFTracer:
         return (l4_proto, sport, dport)
 
     def _parse_custom_data(self, event):
-        if self._module != None:
-            try:
-                custom_data = self._module.parse_data(event.data)
-            except Exception as e:
-                print(e)
-                custom_data = None
-        else:
-            custom_data = None
+        try:
+            custom_data = self._module.parse_data(event.data)
+        except Exception as e:
+            print(e)
+            custom_data = ""
 
         return custom_data
 
     def _print_function_trace(self, flow, event_logs):
-        if self._module != None:
-            header = ["Time Stamp", "Function", "Custom Data"]
-            table = [ [e.time_stamp, e.event_name, e.custom_data] for e in event_logs ]
-        else:
-            header = ["Time Stamp", "Function"]
-            table = [ [e.time_stamp, e.event_name] for e in event_logs ]
-
+        header = ["Time Stamp", "Function", "Custom Data"]
+        table = [[e.time_stamp, e.event_name, e.custom_data] for e in event_logs]
         print(flow)
         print(tabulate.tabulate(table, header, tablefmt="plain"))
         print("")
