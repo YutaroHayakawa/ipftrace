@@ -1,40 +1,96 @@
 #!/usr/bin/env bash
 
+IPFTRACE_COMMAND=""
+DOCKER_COMMAND=""
+POSITIONAL_ARGS=0
+
 if [ -z $IPFTRACE_DOCKER_IMAGE ]; then
-  IPFTRACE="yutarohayakawa/ipftrace:latest"
+  DOCKER_IMAGE="yutarohayakawa/ipftrace:latest"
 else
-  IPFTRACE=$IPFTRACE_DOCKER_IMAGE
+  DOCKER_IMAGE=$IPFTRACE_DOCKER_IMAGE
 fi
 
-function usage() {
-  echo "Usage: $0 <ipftrace arguments>"
-  echo "=== ipftrace usage ==="
-  docker run --rm $IPFTRACE --help
-  exit 1
-}
-
-if [ -z ${BASH_ARGC} ]; then
-  usage
+if [ -z $IPFTRACE_DEBUGFS_DIR ]; then
+  DEBUGFS_DIR="/sys/kernel/debug"
+else
+  DEBUGFS_DIR=$IPFTRACE_DEBUGFS_DIR
 fi
 
-ARGS=(${@})
-MANIFEST=${ARGS[-1]}
-IPFTRACE_ARGS=${ARGS[@]:0:$((${BASH_ARGC} - 1))}
-
-if [ ! -f $MANIFEST ]; then
-  echo "$MANIFEST is not likely a manifest file"
-  usage
+if [ -z $IPFTRACE_KERNEL_SOURCE_DIR ]; then
+  KERNEL_SOURCE_DIR="/usr/src"
+else
+  KERNEL_SOURCE_DIR=$IPFTRACE_KERNEL_SOURCE_DIR
 fi
 
-if [ "${MANIFEST:0:1}" != "/" ]; then
-  MANIFEST=$(pwd)/$MANIFEST
+if [ -z $IPFTRACE_KERNEL_MODULES_DIR ]; then
+  KERNEL_MODULES_DIR="/lib/modules"
+else
+  KERNEL_MODULES_DIR=$IPFTRACE_KERNEL_MODULES_DIR
 fi
 
-docker run --privileged --rm \
-  -v $MANIFEST:/manifest.yaml \
-  -v /sys/kernel/debug:/sys/kernel/debug \
-  -v /lib/modules:/lib/modules \
-  -v /usr/src:/usr/src \
-  $IPFTRACE \
-  $IPFTRACE_ARGS \
-  /manifest.yaml
+DOCKER_COMMAND+="docker run --rm --privileged"
+DOCKER_COMMAND+=" -v $DEBUGFS_DIR:/sys/kernel/debug"
+DOCKER_COMMAND+=" -v $KERNEL_SOURCE_DIR:/usr/src"
+DOCKER_COMMAND+=" -v $KERNEL_MODULES_DIR:/lib/modules"
+
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    -iv|--ipversion)
+      IPFTRACE_COMMAND+=" $1 $2"
+      shift 2
+      ;;
+    -s|--saddr)
+      IPFTRACE_COMMAND+=" $1 $2"
+      shift 2
+      ;;
+    -d|--daddr)
+      IPFTRACE_COMMAND+=" $1 $2"
+      shift 2
+      ;;
+    -p|--proto)
+      IPFTRACE_COMMAND+=" $1 $2"
+      shift 2
+      ;;
+    -sp|--sport)
+      IPFTRACE_COMMAND+=" $1 $2"
+      shift 2
+      ;;
+    -dp|--dport)
+      IPFTRACE_COMMAND+=" $1 $2"
+      shift 2
+      ;;
+    -r|--regex)
+      IPFTRACE_COMMAND+=" $1 $2"
+      shift 2
+      ;;
+    -l|--length)
+      IPFTRACE_COMMAND+=" $1 $2"
+      shift 2
+      ;;
+    -ls|--show)
+      IPFTRACE_COMMAND+=" $1"
+      shift
+      ;;
+    -m|--module)
+      IPFTRACE_COMMAND+=" $1 /module.py"
+      DOCKER_COMMAND+=" -v $(realpath $2):/module.py"
+      shift 2
+      ;;
+    -*|--*)
+      IPFTRACE_COMMAND+=" $1"
+      shift
+      ;;
+    *)
+      if [ $POSITIONAL_ARGS = 0 ]; then
+        IPFTRACE_COMMAND+=" /manifest.yaml"
+        DOCKER_COMMAND+=" -v $(realpath $1):/manifest.yaml"
+      else
+        IPFTRACE_COMMAND+=" $1"
+      fi
+      POSITIONAL_ARGS=$(( $POSITIONAL_ARGS + 1 ))
+      shift
+      ;;
+  esac
+done
+
+$DOCKER_COMMAND $DOCKER_IMAGE $IPFTRACE_COMMAND
