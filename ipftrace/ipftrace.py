@@ -242,7 +242,8 @@ class IPFTracer:
         return (str(saddr), str(daddr))
 
     def _parse_l4_proto(self, event):
-        l4_proto = ID_TO_PROTO[str(event.l4_protocol)]
+        p = str(event.l4_protocol)
+        l4_proto = ID_TO_PROTO.get(p, f"Unknown({p})")
         sport = socket.ntohs(event.sport)
         dport = socket.ntohs(event.dport)
         return (l4_proto, sport, dport)
