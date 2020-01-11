@@ -40,6 +40,12 @@ ipv4_match(uint8_t **head, struct event_data *e)
 
   bpf_probe_read(&iph, sizeof(iph), *head);
 
+  if (iph.version != 4) {
+    return false;
+  }
+
+  e->l3_protocol = 0x0008;
+
   e->v4.saddr = iph.saddr;
 #ifndef SADDRV4_ANY
   if (e->v4.saddr != SADDRV4) ret = false;
@@ -68,6 +74,12 @@ ipv6_match(uint8_t **head, struct event_data *e)
   struct ipv6hdr iph;
 
   bpf_probe_read(&iph, sizeof(iph), *head);
+
+  if (iph.version != 6) {
+    return false;
+  }
+
+  e->l3_protocol = 0xdd86;
 
   memcpy(e->v6.saddr, &iph.saddr, 16);
 #ifndef SADDRV6_ANY
@@ -115,10 +127,6 @@ static inline bool
 ip_match(uint8_t **head, struct event_data *e)
 {
   bool matched;
-
-  if (e->l3_protocol != L3_PROTO) {
-    return false;
-  }
 
 #if L3_PROTO == 0x0008
   matched = ipv4_match(head, e);
@@ -209,7 +217,6 @@ match(struct pt_regs *ctx, struct sk_buff *skb, struct event_data *e)
 
   member_read(&head, skb, head);
   member_read(&ipofs, skb, network_header);
-  member_read(&e->l3_protocol, skb, protocol);
 
   head += ipofs;
 
