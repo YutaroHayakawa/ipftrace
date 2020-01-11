@@ -37,7 +37,7 @@ Options:
 ```
 $ git clone https://github.com/YutaroHayakawa/ipftrace
 $ cd ipftrace
-$ sudo ./scripts/ipftrace-docker -p ICMP examples/generic.yaml
+$ sudo ./scripts/ipftrace-docker -p ICMP examples/manifest/generic.yaml
 ```
 
 ipftrace-docker is a wrapper script for `docker run`. Since the ipftrace container requires some boring things to make it work (like expose the Linux source to the container, make container privileged, uploading manifest file to the container and so on), this script does it for you.
@@ -48,14 +48,14 @@ ipftrace-docker is a wrapper script for `docker run`. Since the ipftrace contain
 $ git clone https://github.com/YutaroHayakawa/ipftrace
 $ cd ipftrace
 $ sudo pip3 install .
-$ sudo ipftrace -p ICMP examples/generic.yaml
+$ sudo ipftrace -p ICMP examples/manifest/generic.yaml
 ```
 
 ## Examples
 
 Trace the ping ICMP packets
 ```
-# ipftrace -p ICMP examples/5.4.0-rc7-btf.yaml
+# ipftrace -p ICMP examples/manifest/5.4.0-rc7-btf.yaml
 <...>
 ICMP	10.231.244.75	->	10.128.218.64
      Time Stamp  Function
@@ -107,7 +107,7 @@ ICMP	10.128.218.64	->	10.231.244.75
 
 Trace the GSO behavior with custom module
 ```
-# ipftrace -p TCP -d 10.231.206.32 -dp 8000 -m gso examples/5.4.0-rc7-btf.yaml
+# ipftrace -p TCP -d 10.231.206.32 -dp 8000 -m examples/module/gso.py examples/5.4.0-rc7-btf.yaml
 <...>
 TCP    10.231.244.75:33696    ->    10.231.206.32:8000
      Time Stamp  Function                      Custom Data
