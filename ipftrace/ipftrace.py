@@ -188,9 +188,9 @@ class IPFTracer:
 
         prog = ""
         prog += open(bpf_hdr).read()
-        prog += self._module.generate_include()
+        prog += self._module.generate_header()
         prog += open(bpf_src).read()
-        prog += self._module.generate_match()
+        prog += self._module.generate_body()
 
         return prog
 

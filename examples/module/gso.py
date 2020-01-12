@@ -44,11 +44,7 @@ def get_name():
     return "GSO"
 
 
-def generate_include():
-    return ""
-    
-
-def generate_match():
+def generate_header():
     return """
     struct gso_data {
       unsigned int len;
@@ -56,7 +52,11 @@ def generate_match():
       unsigned short gso_segs;
       unsigned int gso_type;
     };
+    """
 
+
+def generate_body():
+    return """
     static inline bool
     custom_match(void *ctx, struct sk_buff *skb, uint8_t *data) {
       void *head;
@@ -77,6 +77,7 @@ def generate_match():
       return true;
     }
     """
+
 
 def parse_data(data):
     gd = cast(data, POINTER(GSOData)).contents

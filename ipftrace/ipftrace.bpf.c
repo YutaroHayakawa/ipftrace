@@ -190,10 +190,6 @@ transport_match(uint8_t **head, struct event_data *e)
   }
 #endif
 
-  /* 
-   * We will match to the inner most header for tunneling protocols
-   * so, ignore the L3 protocol `matched` flag for them.
-   */
   switch (e->protocol) {
     case 6: /* TCP */
       matched = tcp_match(head, e);
