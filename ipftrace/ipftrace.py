@@ -83,10 +83,10 @@ class DefaultModule:
     def get_name(self):
         return "Default"
 
-    def generate_include(self):
+    def generate_header(self):
         return ""
 
-    def generate_match(self):
+    def generate_body(self):
         return """
         static inline bool
         custom_match(void *ctx, struct sk_buff *skb, uint8_t *data) {
