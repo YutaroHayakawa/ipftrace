@@ -28,6 +28,13 @@ else
   KERNEL_MODULES_DIR=$IPFTRACE_KERNEL_MODULES_DIR
 fi
 
+echo "================== ipftrace-docker ===================="
+echo "Docker Image             : $DOCKER_IMAGE"
+echo "DebugFS Directory        : $DEBUGFS_DIR"
+echo "Kernel Source Directory  : $KERNEL_SOURCE_DIR"
+echo "Kernel Modules Directory : $KERNEL_MODULES_DIR"
+echo "======================================================="
+
 DOCKER_COMMAND+="docker run --rm --privileged"
 DOCKER_COMMAND+=" -v $DEBUGFS_DIR:/sys/kernel/debug"
 DOCKER_COMMAND+=" -v $KERNEL_SOURCE_DIR:/usr/src"
