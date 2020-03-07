@@ -100,19 +100,41 @@ class DefaultModule:
 
 class IPFTracer:
     def __init__(
-        self, iv, saddr, daddr, proto, sport, dport, module, regex, length, manifest
+        self, iv, saddr, daddr, proto, sport, dport, module, regex, length,
+        manifest, verbose,
     ):
+        self._verbose = verbose
         self._opts = self._build_opts(iv, saddr, daddr, proto, sport, dport)
-        self._functions = self._read_manifest(manifest)
+        self._functions = self._read_functions(manifest)
         self._module = self._load_module(module)
         self._regex = regex
         self._length = length
         self._egress_functions = []
         self._flows = {}
 
+    def _read_functions(self, manifest):
+        funcs = self._read_manifest(manifest)
+        available_funcs = self._read_available_filter_functions()
+        filtered_funcs = []
+        for f in funcs:
+            if f["name"] in available_funcs:
+                filtered_funcs.append(f)
+            else:
+                if self._verbose:
+                    print(f'Function {f["name"]} is not traceable. Skip.')
+        return filtered_funcs
+
     def _read_manifest(self, manifest):
         with open(manifest) as f:
             return yaml.load(f, Loader=yaml.FullLoader)["functions"]
+
+    def _read_available_filter_functions(self):
+        path = "/sys/kernel/debug/tracing/available_filter_functions"
+        available = set()
+        with open(path, "r") as f:
+            for l in f.readlines():
+                available.add(l.split()[0])
+        return available
 
     def _load_module(self, module_path):
         if module_path is None:
@@ -323,6 +345,7 @@ class IPFTracer:
 @click.option("-r", "--regex", default=None, help="Filter the function names by regex")
 @click.option("-l", "--length", default=80, help="Specify the length of function trace")
 @click.option("-ls", "--list-func", is_flag=True, help="List available functions")
+@click.option("-v", "--verbose", is_flag=True, help="Verbose output")
 @click.argument("manifest")
 def main(
     ipversion,
@@ -335,6 +358,7 @@ def main(
     regex,
     length,
     list_func,
+    verbose,
     manifest,
 ):
     """
@@ -354,6 +378,7 @@ def main(
         regex=regex,
         length=length,
         manifest=manifest,
+        verbose=verbose,
     )
 
     if list_func:
