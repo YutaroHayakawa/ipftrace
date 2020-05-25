@@ -1,6 +1,7 @@
 # ipftrace
 
-We are still struggling to make this tool better. So, the interface may be changed suddenly. Sorry.
+Now we have more sophisticated (and compact) implementation in [ipftrace2](https://github.com/YutaroHayakawa/ipftrace2)
+repository. Please check it as well.
 
 ## TL;DR
 ipftrace is a simple function tracer for Linux networking code with flow based filtering. It is similar to the ftrace in some sense but, you can trace **which flow have gone through which functions** inside the kernel which is usually more important information for the network people than **which functions are called** information provided by ftrace.
